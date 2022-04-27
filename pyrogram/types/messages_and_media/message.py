@@ -3632,7 +3632,7 @@ class Message(Object, Update):
         self,
         text: str,
         quote: bool = None,
-        parse_mode: Optional[str] = object,
+        parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
         disable_notification: bool = None,
@@ -3664,12 +3664,9 @@ class Message(Object, Update):
                 If *reply_to_message_id* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
-            parse_mode (``str``, *optional*):
+            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
-                Pass "markdown" or "md" to enable Markdown-style parsing only.
-                Pass "html" to enable HTML-style parsing only.
-                Pass None to completely disable style parsing.
 
             entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
