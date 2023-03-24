@@ -22,7 +22,7 @@
     </a>
 </p>
 
-## Pyrogram
+## Pyrogram - Amano's experimental fork
 
 > Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots
 
@@ -64,8 +64,13 @@ If you'd like to support Pyrogram, you can consider:
 
 ### Installing
 
-``` bash
-pip3 install pyrogram
+#### From git (recommended)
+```sh
+pip install 'pyrogram @ git+https://github.com/AmanoTeam/pyrogram.git@v2.0.106+amn'
+```
+#### From tag tarball
+```sh
+pip install 'pyrogram @ https://github.com/AmanoTeam/pyrogram/archive/refs/tags/v2.0.106+amn.tar.gz'
 ```
 
 ### Resources
