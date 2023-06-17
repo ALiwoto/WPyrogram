@@ -33,6 +33,16 @@ from pyrogram import types
 from pyrogram.file_id import FileId, FileType, PHOTO_TYPES, DOCUMENT_TYPES
 
 
+class PyromodConfig:
+    timeout_handler = None
+    stopped_handler = None
+    throw_exceptions = True
+    unallowed_click_alert = True
+    unallowed_click_alert_text = (
+        "[pyromod] You're not expected to click this button."
+    )
+
+
 async def ainput(prompt: str = "", *, hide: bool = False):
     """Just like the built-in input, but async"""
     with ThreadPoolExecutor(1) as executor:

@@ -283,6 +283,19 @@ class User(Object, Update):
             client=client
         )
 
+    def listen(self, *args, **kwargs):
+        return self._client.listen((None, self.id, None), *args, **kwargs)
+
+    def ask(self, text, *args, **kwargs):
+        return self._client.ask(
+            text, (self.id, self.id, None), *args, **kwargs
+        )
+
+    def stop_listening(self, *args, **kwargs):
+        return self._client.stop_listening(
+            *args, identifier_pattern=(None, self.id, None), **kwargs
+        )
+
     async def archive(self):
         """Bound method *archive* of :obj:`~pyrogram.types.User`.
 

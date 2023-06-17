@@ -17,6 +17,9 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Callable
+import pyrogram
+
+from pyrogram.types import ListenerTypes
 
 from .handler import Handler
 
@@ -46,4 +49,49 @@ class MessageHandler(Handler):
     """
 
     def __init__(self, callback: Callable, filters=None):
+        self.registered_handler = callback
         super().__init__(callback, filters)
+
+    async def check(self, client, message):
+        listener = client.match_listener(
+            (message.chat.id, message.from_user.id, message.id),
+            ListenerTypes.MESSAGE,
+        )[0]
+
+        listener_does_match = handler_does_match = False
+
+        if listener:
+            filters = listener["filters"]
+            listener_does_match = (
+                await filters(client, message) if callable(filters) else True
+            )
+        handler_does_match = (
+            await self.filters(client, message)
+            if callable(self.filters)
+            else True
+        )
+
+        # let handler get the chance to handle if listener
+        # exists but its filters doesn't match
+        return listener_does_match or handler_does_match
+
+    async def resolve_future(self, client, message, *args):
+        listener_type = ListenerTypes.MESSAGE
+        listener, identifier = client.match_listener(
+            (message.chat.id, message.from_user.id, message.id),
+            listener_type,
+        )
+        listener_does_match = False
+        if listener:
+            filters = listener["filters"]
+            listener_does_match = (
+                await filters(client, message) if callable(filters) else True
+            )
+
+        if listener_does_match:
+            if not listener["future"].done():
+                listener["future"].set_result(message)
+                del client.listeners[listener_type][identifier]
+                raise pyrogram.StopPropagation
+        else:
+            await self.registered_handler(client, message, *args)

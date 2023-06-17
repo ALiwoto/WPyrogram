@@ -27,6 +27,7 @@ from pyrogram import types
 from pyrogram import utils
 from pyrogram.errors import MessageIdsEmpty, PeerIdInvalid
 from pyrogram.parser import utils as parser_utils, Parser
+
 from ..object import Object
 from ..update import Update
 
@@ -457,6 +458,21 @@ class Message(Object, Update):
         self.video_chat_members_invited = video_chat_members_invited
         self.web_app_data = web_app_data
         self.reactions = reactions
+
+    async def wait_for_click(
+        self,
+        from_user_id: Optional[int] = None,
+        timeout: Optional[int] = None,
+        filters=None,
+        alert: Union[str, bool] = True,
+    ):
+        return await self._client.listen(
+            (self.chat.id, from_user_id, self.id),
+            listener_type=types.ListenerTypes.CALLBACK_QUERY,
+            timeout=timeout,
+            filters=filters,
+            unallowed_click_alert=alert,
+        )
 
     @staticmethod
     async def _parse(

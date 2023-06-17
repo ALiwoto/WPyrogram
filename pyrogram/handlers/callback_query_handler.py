@@ -18,6 +18,9 @@
 
 from typing import Callable
 
+from pyrogram.utils import PyromodConfig
+from pyrogram.types import ListenerTypes
+
 from .handler import Handler
 
 
@@ -46,4 +49,51 @@ class CallbackQueryHandler(Handler):
     """
 
     def __init__(self, callback: Callable, filters=None):
+        self.registered_handler = callback
         super().__init__(callback, filters)
+
+    async def check(self, client, query):
+        listener = client.match_listener(
+            (query.message.chat.id, query.from_user.id, query.message.id),
+            ListenerTypes.CALLBACK_QUERY,
+        )[0]
+
+        # managing unallowed user clicks
+        if PyromodConfig.unallowed_click_alert:
+            permissive_listener = client.match_listener(
+                identifier_pattern=(
+                    query.message.chat.id,
+                    None,
+                    query.message.id,
+                ),
+                listener_type=ListenerTypes.CALLBACK_QUERY,
+            )[0]
+
+            if (permissive_listener and not listener) and permissive_listener[
+                "unallowed_click_alert"
+            ]:
+                alert = (
+                    permissive_listener["unallowed_click_alert"]
+                    if type(permissive_listener["unallowed_click_alert"])
+                    == str
+                    else PyromodConfig.unallowed_click_alert_text
+                )
+                await query.answer(alert)
+                return False
+
+        filters = listener["filters"] if listener else self.filters
+
+        return await filters(client, query) if callable(filters) else True
+
+    async def resolve_future(self, client, query, *args):
+        listener_type = ListenerTypes.CALLBACK_QUERY
+        listener, identifier = client.match_listener(
+            (query.message.chat.id, query.from_user.id, query.message.id),
+            listener_type,
+        )
+
+        if listener and not listener["future"].done():
+            listener["future"].set_result(query)
+            del client.listeners[listener_type][identifier]
+        else:
+            await self.registered_handler(client, query, *args)

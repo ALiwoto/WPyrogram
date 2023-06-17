@@ -50,8 +50,8 @@ from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
 from pyrogram.session import Auth, Session
 from pyrogram.storage import FileStorage, MemoryStorage
-from pyrogram.types import User, TermsOfService
-from pyrogram.utils import ainput
+from pyrogram.types import User, TermsOfService, ListenerStopped, ListenerTimeout, ListenerTypes
+from pyrogram.utils import ainput, PyromodConfig
 from .dispatcher import Dispatcher
 from .file_id import FileId, FileType, ThumbnailSource
 from .mime_types import mime_types
@@ -297,6 +297,7 @@ class Client(Methods):
         self.last_update_time = datetime.now()
 
         self.loop = asyncio.get_event_loop()
+        self.listeners = {listener_type: {} for listener_type in ListenerTypes}
 
     def __enter__(self):
         return self.start()
@@ -327,6 +328,137 @@ class Client(Methods):
 
             if datetime.now() - self.last_update_time > timedelta(seconds=self.UPDATES_WATCHDOG_INTERVAL):
                 await self.invoke(raw.functions.updates.GetState())
+
+    async def listen(
+        self,
+        identifier: tuple,
+        filters=None,
+        listener_type=ListenerTypes.MESSAGE,
+        timeout=None,
+        unallowed_click_alert=True,
+    ):
+        if type(listener_type) != ListenerTypes:
+            raise TypeError(
+                "Parameter listener_type should be a"
+                " value from pyromod.listen.ListenerTypes"
+            )
+
+        future = self.loop.create_future()
+        future.add_done_callback(
+            lambda f: self.stop_listening(identifier, listener_type)
+        )
+
+        listener_data = {
+            "future": future,
+            "filters": filters,
+            "unallowed_click_alert": unallowed_click_alert,
+        }
+
+        self.listeners[listener_type].update({identifier: listener_data})
+
+        try:
+            return await asyncio.wait_for(future, timeout)
+        except asyncio.exceptions.TimeoutError:
+            if callable(PyromodConfig.timeout_handler):
+                PyromodConfig.timeout_handler(
+                    identifier, listener_data, timeout
+                )
+            elif PyromodConfig.throw_exceptions:
+                raise ListenerTimeout(timeout)
+
+    async def ask(
+        self,
+        text,
+        identifier: tuple,
+        filters=None,
+        listener_type=ListenerTypes.MESSAGE,
+        timeout=None,
+        *args,
+        **kwargs
+    ):
+        request = await self.send_message(identifier[0], text, *args, **kwargs)
+        response = await self.listen(
+            identifier, filters, listener_type, timeout
+        )
+        if response:
+            response.request = request
+
+        return response
+
+    """
+    needed for matching when message_id or
+    user_id is null, and to take precedence
+    """
+
+    def match_listener(
+        self,
+        data: Optional[tuple] = None,
+        listener_type: ListenerTypes = ListenerTypes.MESSAGE,
+        identifier_pattern: Optional[tuple] = None,
+    ) -> tuple:
+        if data:
+            listeners = self.listeners[listener_type]
+            # case with 3 args on identifier
+            # most probably waiting for a specific user
+            # to click a button in a specific message
+            if data in listeners:
+                return listeners[data], data
+
+            # cases with 2 args on identifier
+            # (None, user, message) does not make
+            # sense since the message_id is not unique
+            elif (data[0], data[1], None) in listeners:
+                matched = (data[0], data[1], None)
+            elif (data[0], None, data[2]) in listeners:
+                matched = (data[0], None, data[2])
+
+            # cases with 1 arg on identifier
+            # (None, None, message) does not make sense as well
+            elif (data[0], None, None) in listeners:
+                matched = (data[0], None, None)
+            elif (None, data[1], None) in listeners:
+                matched = (None, data[1], None)
+            else:
+                return None, None
+
+            return listeners[matched], matched
+        elif identifier_pattern:
+
+            def match_identifier(pattern, identifier):
+                comparison = (
+                    pattern[0] in (identifier[0], None),
+                    pattern[1] in (identifier[1], None),
+                    pattern[2] in (identifier[2], None),
+                )
+                return comparison == (True, True, True)
+
+            for identifier, listener in self.listeners[listener_type].items():
+                if match_identifier(identifier_pattern, identifier):
+                    return listener, identifier
+            return None, None
+
+    def stop_listening(
+        self,
+        data: Optional[tuple] = None,
+        listener_type: ListenerTypes = ListenerTypes.MESSAGE,
+        identifier_pattern: Optional[tuple] = None,
+    ):
+        listener, identifier = self.match_listener(
+            data, listener_type, identifier_pattern
+        )
+
+        if not listener:
+            return
+        elif listener["future"].done():
+            del self.listeners[listener_type][identifier]
+            return
+
+        if callable(PyromodConfig.stopped_handler):
+            PyromodConfig.stopped_handler(identifier, listener)
+        elif PyromodConfig.throw_exceptions:
+            listener["future"].set_exception(ListenerStopped())
+
+        del self.listeners[listener_type][identifier]
 
     async def authorize(self) -> User:
         if self.bot_token:
