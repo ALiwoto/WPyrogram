@@ -53,13 +53,16 @@ class CallbackQueryHandler(Handler):
         super().__init__(callback, filters)
 
     async def check(self, client, query):
+        chat_id = query.message.chat.id if query.message else None
+        user_id = query.from_user.id if query.from_user else None
+        message_id = query.message.id if query.message else None
         listener = client.match_listener(
-            (query.message.chat.id, query.from_user.id, query.message.id),
+            (chat_id, user_id, message_id),
             ListenerTypes.CALLBACK_QUERY,
         )[0]
 
         # managing unallowed user clicks
-        if PyromodConfig.unallowed_click_alert:
+        if PyromodConfig.unallowed_click_alert and query.message:
             permissive_listener = client.match_listener(
                 identifier_pattern=(
                     query.message.chat.id,
@@ -86,9 +89,13 @@ class CallbackQueryHandler(Handler):
         return await filters(client, query) if callable(filters) else True
 
     async def resolve_future(self, client, query, *args):
+        chat_id = query.message.chat.id if query.message else None
+        user_id = query.from_user.id if query.from_user else None
+        message_id = query.message.id if query.message else None
+
         listener_type = ListenerTypes.CALLBACK_QUERY
         listener, identifier = client.match_listener(
-            (query.message.chat.id, query.from_user.id, query.message.id),
+            (chat_id, user_id, message_id),
             listener_type,
         )
 
