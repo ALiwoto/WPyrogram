@@ -66,11 +66,11 @@ If you'd like to support Pyrogram, you can consider:
 
 #### From git (recommended)
 ```sh
-pip install 'pyrogram @ git+https://github.com/AmanoTeam/pyrogram.git@v2.0.106+amn'
+pip install 'pyrogram @ git+https://github.com/AmanoTeam/pyrogram.git@v2.0.106+amn7'
 ```
 #### From tag tarball
 ```sh
-pip install 'pyrogram @ https://github.com/AmanoTeam/pyrogram/archive/refs/tags/v2.0.106+amn.tar.gz'
+pip install 'pyrogram @ https://github.com/AmanoTeam/pyrogram/archive/refs/tags/v2.0.106+amn7.tar.gz'
 ```
 
 ### Resources
