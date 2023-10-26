@@ -34,7 +34,7 @@ jobs:
         run: |
           python -m pip install --upgrade build twine
           python -m build
-          twine check --strict dist/*
+          twine check --strict dist/WPyrogram* 2>&1
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
@@ -61,7 +61,7 @@ jobs:
 
       - name: Get Asset name
         run: |
-          export PKG=$(ls dist/ | grep tar)
+          export PKG=$(ls dist/WPyrogram* | grep tar)
           set -- $PKG
           echo "name=$1" >> $GITHUB_ENV
       - name: Upload Release Asset (sdist) to GitHub
