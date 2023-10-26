@@ -1,0 +1,1 @@
+git checkout Production && git merge main && git push origin Production && git checkout main
