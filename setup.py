@@ -38,12 +38,12 @@ if len(argv) > 1 and argv[1] in ["bdist_wheel", "install", "develop"]:
     errors_compiler.start()
 
 setup(
-    name="Pyrogram",
+    name="WPyrogram",
     version=version,
     description="Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots - Amano's experimental fork",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/AmanoTeam/pyrogram",
+    url="https://github.com/ALiwoto/WPyrogram",
     download_url="https://github.com/AmanoTeam/pyrogram",
     author="Dan",
     author_email="dan@pyrogram.org",
@@ -73,9 +73,9 @@ setup(
     ],
     keywords="telegram chat messenger mtproto api client library python",
     project_urls={
-        "Tracker": "https://github.com/AmanoTeam/pyrogram/issues",
-        "Community": "https://t.me/AmanoChat",
-        "Source": "https://github.com/AmanoTeam/pyrogram",
+        "Tracker": "https://github.com/ALiwoto/WPyrogram/issues",
+        "Community": "https://t.me/Pyrogram",
+        "Source": "https://github.com/ALiwoto/WPyrogram",
         "Documentation": "https://docs.pyrogram.org",
     },
     python_requires="~=3.7",
