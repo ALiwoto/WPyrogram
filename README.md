@@ -22,9 +22,12 @@
     </a>
 </p>
 
-## Pyrogram - Amano's experimental fork
+## Pyrogram - Woto's experimental fork
 
 > Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots
+
+WARNING: We merge changes made to few of pyrogram forks plus changes made by us to this repository. All the features are just customized feature mostly for personal use; there is no guarantee in them being stable, USE AT YOUR OWN RISK.
+All of the repositories that we merge (some) features from are listed in [Extra.md](./Extras.md) file.
 
 ``` python
 from pyrogram import Client, filters
