@@ -56,7 +56,7 @@ jobs:
         run: |
           export PKG=$(ls dist/WPyrogram* | grep tar)
           set -- $PKG
-          echo "name=$1" >> $GITHUB_ENV
+          echo "name=$1#dist/" >> $GITHUB_ENV
 
       - name: Upload Release Asset (sdist) to GitHub
         id: upload-release-asset
