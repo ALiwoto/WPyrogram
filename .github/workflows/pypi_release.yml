@@ -56,7 +56,7 @@ jobs:
         run: |
           export PKG=$(ls dist/WPyrogram* | grep tar)
           set -- $PKG
-          echo "name=$1#dist/" >> $GITHUB_ENV
+          echo "name=$1" >> $GITHUB_ENV
 
       - name: Upload Release Asset (sdist) to GitHub
         id: upload-release-asset
@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/${{ env.name }}
+          asset_path: ${{ env.name }}
           asset_name: ${{ env.name }}
           asset_content_type: application/zip
 
