@@ -1,1 +1,1 @@
-git checkout Production && git merge main && git push origin Production && git checkout main
+git checkout Production && git merge woto-version && git push origin Production && git checkout woto-version
