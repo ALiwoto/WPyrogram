@@ -40,30 +40,13 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-      - name: Set the Version
-        run: |
-          grep_result=$(grep version pyrogram/__init__.py)
-          prefix="version = \""
-          suffix="\""
-          final_value=${grep_result#"$prefix"}
-          final_value=${final_value%"$suffix"}
-          echo "::set-env name=CURRENT_LIB_VERSION::$(echo 'v'$final_value)"
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        with:
-          tag_name: ${{ env.CURRENT_LIB_VERSION }}
-          release_name: ${{ env.CURRENT_LIB_VERSION }}
-          draft: false
-          prerelease: false
 
       - name: Get Asset name
         run: |
           export PKG=$(ls dist/WPyrogram* | grep tar)
           set -- $PKG
           echo "name=$1" >> $GITHUB_ENV
+
       - name: Upload Release Asset (sdist) to GitHub
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
