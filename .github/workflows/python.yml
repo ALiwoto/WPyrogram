@@ -2,9 +2,10 @@ name: Pyrogram
 
 on: [push, pull_request]
 
+permissions: write-all
+
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -32,3 +33,4 @@ jobs:
       - name: Run tests
         run: |
           tox
+
