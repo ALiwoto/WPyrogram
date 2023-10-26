@@ -1,3 +1,5 @@
+name: PyPi package release
+
 on:
   push:
     branches: [ Production ]
@@ -40,7 +42,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
       - name: Set the Version
         run: |
-          grep_result=$(grep version pyrogram\__init__.py)
+          grep_result=$(grep version pyrogram/__init__.py)
           prefix="version = \""
           suffix="\""
           final_value=${grep_result#"$prefix"}
