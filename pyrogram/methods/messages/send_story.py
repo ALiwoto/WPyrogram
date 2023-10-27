@@ -228,6 +228,7 @@ class SendStory:
                 try:
                     r = await self.invoke(
                         raw.functions.stories.send_story.SendStory(
+                            peer=await self.resolve_peer("me"),
                             media=media,
                             privacy_rules=None,
                             random_id=self.rnd_id(),
