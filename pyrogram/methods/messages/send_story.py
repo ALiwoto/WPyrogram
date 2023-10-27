@@ -235,7 +235,7 @@ class SendStory:
                             noforwards=protect_content,
                             media_areas=None,
                             period=period,
-                            **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
+                            **await utils.parse_caption_entities(self, caption, parse_mode, caption_entities)
                         )
                     )
                 except FilePartMissing as e:

@@ -368,6 +368,26 @@ async def parse_text_entities(
         "entities": entities
     }
 
+async def parse_caption_entities(
+    client: "pyrogram.Client",
+    text: str,
+    parse_mode: enums.ParseMode,
+    entities: List["types.MessageEntity"]
+) -> Dict[str, Union[str, List[raw.base.MessageEntity]]]:
+    if entities:
+        # Inject the client instance because parsing user mentions requires it
+        for entity in entities:
+            entity._client = client
+
+        text, entities = text, [await entity.write() for entity in entities] or None
+    else:
+        text, entities = (await client.parser.parse(text, parse_mode)).values()
+
+    return {
+        "caption": text,
+        "entities": entities
+    }
+
 
 def zero_datetime() -> datetime:
     return datetime.fromtimestamp(0, timezone.utc)
