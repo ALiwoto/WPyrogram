@@ -48,6 +48,7 @@ class SendStory:
         file_name: str = None,
         supports_streaming: bool = True,
         protect_content: bool = None,
+        privacy_rules: Optional[List["raw.base.InputPrivacyRule"]] = None,
         progress: Callable = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
@@ -224,17 +225,20 @@ class SendStory:
                     ]
                 )
 
+            if not privacy_rules:
+                privacy_rules = [raw.types.PrivacyValueAllowAll()]
+            
             while True:
                 try:
                     r = await self.invoke(
                         raw.functions.stories.send_story.SendStory(
                             peer=await self.resolve_peer("me"),
                             media=media,
-                            privacy_rules=None,
+                            privacy_rules=privacy_rules,
                             random_id=self.rnd_id(),
                             pinned=pinned,
                             noforwards=protect_content,
-                            media_areas=None,
+                            media_areas=[],
                             period=period,
                             **await utils.parse_caption_entities(self, caption, parse_mode, caption_entities)
                         )
