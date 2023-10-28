@@ -33,6 +33,16 @@ from pyrogram import types
 from pyrogram.file_id import FileId, FileType, PHOTO_TYPES, DOCUMENT_TYPES
 
 
+class PyromodConfig:
+    timeout_handler = None
+    stopped_handler = None
+    throw_exceptions = True
+    unallowed_click_alert = True
+    unallowed_click_alert_text = (
+        "[pyromod] You're not expected to click this button."
+    )
+
+
 async def ainput(prompt: str = "", *, hide: bool = False):
     """Just like the built-in input, but async"""
     with ThreadPoolExecutor(1) as executor:
@@ -414,6 +424,26 @@ async def parse_text_entities(
         "entities": entities
     }
 
+async def parse_caption_entities(
+    client: "pyrogram.Client",
+    text: str,
+    parse_mode: enums.ParseMode,
+    entities: List["types.MessageEntity"]
+) -> Dict[str, Union[str, List[raw.base.MessageEntity]]]:
+    if entities:
+        # Inject the client instance because parsing user mentions requires it
+        for entity in entities:
+            entity._client = client
+
+        text, entities = text, [await entity.write() for entity in entities] or None
+    else:
+        text, entities = (await client.parser.parse(text, parse_mode)).values()
+
+    return {
+        "caption": text,
+        "entities": entities
+    }
+
 
 def zero_datetime() -> datetime:
     return datetime.fromtimestamp(0, timezone.utc)
@@ -425,3 +455,22 @@ def timestamp_to_datetime(ts: Optional[int]) -> Optional[datetime]:
 
 def datetime_to_timestamp(dt: Optional[datetime]) -> Optional[int]:
     return int(dt.timestamp()) if dt else None
+
+
+def get_reply_head_fm(message_thread_id: int, reply_to_message_id: int) -> raw.types.InputReplyToMessage:
+    reply_to = None
+    if (
+        reply_to_message_id or
+        message_thread_id
+    ):
+        if not reply_to_message_id:
+            reply_to = raw.types.InputReplyToMessage(
+                reply_to_msg_id=message_thread_id,
+                top_msg_id=message_thread_id
+            )
+        else:
+            reply_to = raw.types.InputReplyToMessage(
+                reply_to_msg_id=reply_to_message_id,
+                top_msg_id=message_thread_id
+            )
+    return reply_to
