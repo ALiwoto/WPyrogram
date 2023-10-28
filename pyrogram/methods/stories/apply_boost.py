@@ -16,16 +16,38 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .callback_query_handler import CallbackQueryHandler
-from .chat_join_request_handler import ChatJoinRequestHandler
-from .chat_member_updated_handler import ChatMemberUpdatedHandler
-from .chosen_inline_result_handler import ChosenInlineResultHandler
-from .deleted_messages_handler import DeletedMessagesHandler
-from .disconnect_handler import DisconnectHandler
-from .edited_message_handler import EditedMessageHandler
-from .inline_query_handler import InlineQueryHandler
-from .message_handler import MessageHandler
-from .poll_handler import PollHandler
-from .raw_update_handler import RawUpdateHandler
-from .story_handler import StoryHandler
-from .user_status_handler import UserStatusHandler
+from typing import Union
+
+import pyrogram
+from pyrogram import raw
+
+
+class ApplyBoost:
+    async def apply_boost(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+    ) -> bool:
+        """Apply boost
+
+        .. include:: /_includes/usable-by/users-bots.rst
+
+        Parameters:
+            chat_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target chat.
+
+        Returns:
+            ``str``: On success, a bool is returned.
+
+        Example:
+            .. code-block:: python
+
+                # Apply boost to chat id
+                app.apply_boost(chat_id)
+        """
+        r = await self.invoke(
+            raw.functions.stories.ApplyBoost(
+                peer=await self.resolve_peer(chat_id),
+            )
+        )
+
+        return r

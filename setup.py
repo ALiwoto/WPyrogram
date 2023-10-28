@@ -40,11 +40,11 @@ if len(argv) > 1 and argv[1] in ["bdist_wheel", "install", "develop"]:
 setup(
     name="WPyrogram",
     version=version,
-    description="Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots - Amano's experimental fork",
+    description="Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots - Woto's experimental fork",
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/ALiwoto/WPyrogram",
-    download_url="https://github.com/AmanoTeam/pyrogram",
+    download_url="https://github.com/ALiwoto/WPyrogram",
     author="Dan",
     author_email="dan@pyrogram.org",
     license="LGPLv3",

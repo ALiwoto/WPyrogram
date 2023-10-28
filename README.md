@@ -68,13 +68,14 @@ If you'd like to support Pyrogram, you can consider:
 ### Installing
 
 #### From git (recommended)
+
+> NOTE: in order to use WPyrogram, please uninstall pyrogram first.
+
 ```sh
-pip install 'pyrogram @ git+https://github.com/AmanoTeam/pyrogram.git@v2.0.106+amn7'
+pip uninstall pyrogram
+pip install 'wpyrogram'
 ```
-#### From tag tarball
-```sh
-pip install 'pyrogram @ https://github.com/AmanoTeam/pyrogram/archive/refs/tags/v2.0.106+amn7.tar.gz'
-```
+
 
 ### Resources
 

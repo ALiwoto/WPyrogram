@@ -16,16 +16,21 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .callback_query_handler import CallbackQueryHandler
-from .chat_join_request_handler import ChatJoinRequestHandler
-from .chat_member_updated_handler import ChatMemberUpdatedHandler
-from .chosen_inline_result_handler import ChosenInlineResultHandler
-from .deleted_messages_handler import DeletedMessagesHandler
-from .disconnect_handler import DisconnectHandler
-from .edited_message_handler import EditedMessageHandler
-from .inline_query_handler import InlineQueryHandler
-from .message_handler import MessageHandler
-from .poll_handler import PollHandler
-from .raw_update_handler import RawUpdateHandler
-from .story_handler import StoryHandler
-from .user_status_handler import UserStatusHandler
+from enum import auto
+from .auto_name import AutoName
+
+
+class StoriesPrivacyRules(AutoName):
+    """Stories privacy rules type enumeration used in :obj:`~pyrogram.method.SendStory`."""
+
+    PUBLIC = auto()
+    "Public stories"
+
+    CONTACTS = auto()
+    "Contacts only stories"
+
+    CLOSE_FRIENDS = auto()
+    "Close friends stories"
+
+    SELECTED_USERS = auto()
+    "Selected users stories"

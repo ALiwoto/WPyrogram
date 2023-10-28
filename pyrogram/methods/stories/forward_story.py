@@ -16,16 +16,23 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .callback_query_handler import CallbackQueryHandler
-from .chat_join_request_handler import ChatJoinRequestHandler
-from .chat_member_updated_handler import ChatMemberUpdatedHandler
-from .chosen_inline_result_handler import ChosenInlineResultHandler
-from .deleted_messages_handler import DeletedMessagesHandler
-from .disconnect_handler import DisconnectHandler
-from .edited_message_handler import EditedMessageHandler
-from .inline_query_handler import InlineQueryHandler
-from .message_handler import MessageHandler
-from .poll_handler import PollHandler
-from .raw_update_handler import RawUpdateHandler
-from .story_handler import StoryHandler
-from .user_status_handler import UserStatusHandler
+from datetime import datetime
+from typing import Union, Optional
+
+import pyrogram
+from pyrogram import raw
+from pyrogram import types
+from pyrogram import utils
+
+class ForwardStory:
+    async def forward_story(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        from_chat_id: Union[int, str],
+        story_id: int,
+        disable_notification: bool = None,
+        message_thread_id: int = None,
+        schedule_date: datetime = None,
+    ) -> Optional["types.Message"]:
+        #TODO
+        pass

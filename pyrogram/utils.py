@@ -33,16 +33,6 @@ from pyrogram import types
 from pyrogram.file_id import FileId, FileType, PHOTO_TYPES, DOCUMENT_TYPES
 
 
-class PyromodConfig:
-    timeout_handler = None
-    stopped_handler = None
-    throw_exceptions = True
-    unallowed_click_alert = True
-    unallowed_click_alert_text = (
-        "[pyromod] You're not expected to click this button."
-    )
-
-
 async def ainput(prompt: str = "", *, hide: bool = False):
     """Just like the built-in input, but async"""
     with ThreadPoolExecutor(1) as executor:
@@ -101,6 +91,7 @@ async def parse_messages(
 ) -> List["types.Message"]:
     users = {i.id: i for i in messages.users}
     chats = {i.id: i for i in messages.chats}
+    topics = {i.id: i for i in messages.topics} if hasattr(messages, "topics") else None
 
     if not messages.messages:
         return types.List()
@@ -108,13 +99,19 @@ async def parse_messages(
     parsed_messages = []
 
     for message in messages.messages:
-        parsed_messages.append(await types.Message._parse(client, message, users, chats, replies=0))
+        parsed_messages.append(await types.Message._parse(client, message, users, chats, topics, replies=0))
 
     if replies:
         messages_with_replies = {
             i.id: i.reply_to.reply_to_msg_id
             for i in messages.messages
-            if not isinstance(i, raw.types.MessageEmpty) and i.reply_to
+            if not isinstance(i, raw.types.MessageEmpty) and i.reply_to and isinstance(i.reply_to, raw.types.MessageReplyHeader)
+        }
+
+        message_reply_to_story = {
+            i.id: {'user_id': i.reply_to.user_id, 'story_id': i.reply_to.story_id}
+            for i in messages.messages
+            if not isinstance(i, raw.types.MessageEmpty) and i.reply_to and isinstance(i.reply_to, raw.types.MessageReplyStoryHeader)
         }
 
         if messages_with_replies:
@@ -138,7 +135,27 @@ async def parse_messages(
 
                 for reply in reply_messages:
                     if reply.id == reply_id:
-                        message.reply_to_message = reply
+                        if not reply.forum_topic_created:
+                            message.reply_to_message = reply
+
+        if message_reply_to_story:
+            for m in parsed_messages:
+                if m.chat:
+                    chat_id = m.chat.id
+                    break
+            else:
+                chat_id = 0
+
+            reply_messages = {}
+            for msg_id in message_reply_to_story.keys():
+                reply_messages[msg_id] = await client.get_stories(
+                    message_reply_to_story[msg_id]['user_id'],
+                    message_reply_to_story[msg_id]['story_id']
+                )
+
+            for message in parsed_messages:
+                if message.id in reply_messages:
+                    message.reply_to_story = reply_messages[message.id]
 
     return types.List(parsed_messages)
 
@@ -228,6 +245,19 @@ def get_raw_peer_id(peer: raw.base.Peer) -> Optional[int]:
 
     return None
 
+def get_input_peer_id(peer: raw.base.InputPeer) -> Optional[int]:
+    """Get the raw peer id from a InputPeer object"""
+    if isinstance(peer, raw.types.InputPeerUser):
+        return peer.user_id
+
+    if isinstance(peer, raw.types.InputPeerChat):
+        return peer.chat_id
+
+    if isinstance(peer, raw.types.InputPeerChannel):
+        return peer.channel_id
+
+    return None
+
 
 def get_peer_id(peer: raw.base.Peer) -> int:
     """Get the non-raw peer id from a Peer object"""
@@ -255,6 +285,22 @@ def get_peer_type(peer_id: int) -> str:
 
     raise ValueError(f"Peer id invalid: {peer_id}")
 
+def get_reply_to(
+    reply_to_message_id: Optional[int] = None,
+    message_thread_id: Optional[int] = None,
+    user_id: Optional[raw.types.InputUser] = None,
+    reply_to_story_id: Optional[int] = None
+) -> Optional[Union[raw.types.InputReplyToMessage, raw.types.InputReplyToStory]]:
+    if all((user_id, reply_to_story_id)):
+        return raw.types.InputReplyToStory(user_id=user_id, story_id=reply_to_story_id)  # type: ignore[arg-type]
+
+    if any((reply_to_message_id, message_thread_id)):
+        return raw.types.InputReplyToMessage(
+            reply_to_msg_id=reply_to_message_id or message_thread_id,  # type: ignore[arg-type]
+            top_msg_id=message_thread_id if reply_to_message_id else None,
+        )
+
+    return None
 
 def get_channel_id(peer_id: int) -> int:
     return MAX_CHANNEL_ID - peer_id
@@ -368,26 +414,6 @@ async def parse_text_entities(
         "entities": entities
     }
 
-async def parse_caption_entities(
-    client: "pyrogram.Client",
-    text: str,
-    parse_mode: enums.ParseMode,
-    entities: List["types.MessageEntity"]
-) -> Dict[str, Union[str, List[raw.base.MessageEntity]]]:
-    if entities:
-        # Inject the client instance because parsing user mentions requires it
-        for entity in entities:
-            entity._client = client
-
-        text, entities = text, [await entity.write() for entity in entities] or None
-    else:
-        text, entities = (await client.parser.parse(text, parse_mode)).values()
-
-    return {
-        "caption": text,
-        "entities": entities
-    }
-
 
 def zero_datetime() -> datetime:
     return datetime.fromtimestamp(0, timezone.utc)
@@ -399,22 +425,3 @@ def timestamp_to_datetime(ts: Optional[int]) -> Optional[datetime]:
 
 def datetime_to_timestamp(dt: Optional[datetime]) -> Optional[int]:
     return int(dt.timestamp()) if dt else None
-
-
-def get_reply_head_fm(message_thread_id: int, reply_to_message_id: int) -> raw.types.InputReplyToMessage:
-    reply_to = None
-    if (
-        reply_to_message_id or
-        message_thread_id
-    ):
-        if not reply_to_message_id:
-            reply_to = raw.types.InputReplyToMessage(
-                reply_to_msg_id=message_thread_id,
-                top_msg_id=message_thread_id
-            )
-        else:
-            reply_to = raw.types.InputReplyToMessage(
-                reply_to_msg_id=reply_to_message_id,
-                top_msg_id=message_thread_id
-            )
-    return reply_to

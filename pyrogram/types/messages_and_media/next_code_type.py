@@ -16,16 +16,24 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .callback_query_handler import CallbackQueryHandler
-from .chat_join_request_handler import ChatJoinRequestHandler
-from .chat_member_updated_handler import ChatMemberUpdatedHandler
-from .chosen_inline_result_handler import ChosenInlineResultHandler
-from .deleted_messages_handler import DeletedMessagesHandler
-from .disconnect_handler import DisconnectHandler
-from .edited_message_handler import EditedMessageHandler
-from .inline_query_handler import InlineQueryHandler
-from .message_handler import MessageHandler
-from .poll_handler import PollHandler
-from .raw_update_handler import RawUpdateHandler
-from .story_handler import StoryHandler
-from .user_status_handler import UserStatusHandler
+from pyrogram import raw
+from .auto_name import AutoName
+
+
+class NextCodeType(AutoName):
+    """Next code type enumeration used in :obj:`~pyrogram.types.SentCode`."""
+
+    CALL = raw.types.auth.CodeTypeCall
+    "The code will be sent via a phone call. A synthesized voice will tell the user which verification code to input."
+
+    FLASH_CALL = raw.types.auth.CodeTypeFlashCall
+    "The code will be sent via a flash phone call, that will be closed immediately."
+
+    MISSED_CALL = raw.types.auth.CodeTypeMissedCall
+    "Missed call."
+
+    SMS = raw.types.auth.CodeTypeSms
+    "The code was sent via SMS."
+
+    FRAGMENT_SMS = raw.types.auth.CodeTypeFragmentSms
+    "The code was sent via Fragment SMS."
