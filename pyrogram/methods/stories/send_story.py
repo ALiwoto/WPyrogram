@@ -27,8 +27,8 @@ from pyrogram.errors import FilePartMissing
 class SendStory:
     async def send_story(
         self: "pyrogram.Client",
-        chat_id: Union[int, str],
         media: Union[str, BinaryIO],
+        chat_id: Union[int, str]="me",
         caption: str = None,
         period: int = None,
         duration: int = 0,
@@ -211,11 +211,11 @@ class SendStory:
                 if isinstance(privacy, str):
                     # try to parse it from str
                     privacy = privacy.lower().replace("-", "").replace("_", "")
-                    if privacy_rules == "closefriends" or privacy_rules == "friends":
+                    if privacy == "closefriends" or privacy == "friends":
                         privacy_rules = [raw.types.InputPrivacyValueAllowCloseFriends()]
-                    elif privacy_rules == "contacts":
+                    elif privacy == "contacts":
                         privacy_rules = [raw.types.InputPrivacyValueAllowContacts()]
-                    elif privacy_rules == "all":
+                    elif privacy == "all":
                         privacy_rules = [raw.types.InputPrivacyValueAllowAll()]
                 elif privacy == enums.StoriesPrivacyRules.PUBLIC:
                     privacy_rules.append(raw.types.InputPrivacyValueAllowAll())
