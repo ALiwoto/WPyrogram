@@ -2,10 +2,14 @@ import pyrogram
 
 class Story:
     peer = None
-    story_item = None
+    story_item: "pyrogram.raw.types.StoryItem" = None
 
-    def __init__(self, peer, story_item) -> None:
-        pass
+    _client: "pyrogram.Client" = None
+
+    def __init__(self, client: "pyrogram.Client", peer, story_item: "pyrogram.raw.types.StoryItem") -> None:
+        self.peer = peer
+        self.story_item = story_item
+        self._client = client
 
     @staticmethod
     async def _parse(
@@ -14,4 +18,4 @@ class Story:
         the_story: "pyrogram.raw.types.StoryItem"
     ):
         #TODO: parse more stuff here maybe....
-        return Story(peer=peer, story_item=the_story)
+        return Story(client=client, peer=peer, story_item=the_story)
