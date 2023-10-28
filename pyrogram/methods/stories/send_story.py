@@ -34,11 +34,13 @@ class SendStory:
     async def send_story(
         self: "pyrogram.Client",
         story: Union[str, BinaryIO],
+        chat_id: Union[int, str] = "me",
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         caption_entities: List["types.MessageEntity"] = None,
+        media_area: List["raw.base.MediaArea"] = None,
         has_spoiler: bool = None,
-        pinned: bool = False,
+        pinned: bool = True,
         ttl_seconds: int = None,
         period: int = None,
         duration: int = 0,
@@ -52,9 +54,9 @@ class SendStory:
         progress: Callable = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
-        """Send video files.
+        """Upload a story on a user profile or channel.
 
-        .. include:: /_includes/usable-by/users-bots.rst
+        .. include:: /_includes/usable-by/users.rst
 
         Parameters:
             chat_id (``int`` | ``str``):
@@ -62,8 +64,8 @@ class SendStory:
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            video (``str`` | ``BinaryIO``):
-                Video to send.
+            story (``str`` | ``BinaryIO``):
+                story to send.
                 Pass a file_id as string to send a video that exists on the Telegram servers,
                 pass an HTTP URL as a string for Telegram to get a video from the Internet,
                 pass a file path as string to upload a new video that exists on your local machine, or
@@ -226,19 +228,54 @@ class SendStory:
                 )
 
             if not privacy_rules:
-                privacy_rules = [raw.types.PrivacyValueAllowAll()]
+                privacy_rules = [raw.types.InputPrivacyValueAllowCloseFriends()]
+            elif isinstance(privacy_rules, str):
+                # try to parse it from str
+                privacy_rules = privacy_rules.lower().replace("-", "")
+                if privacy_rules == "closefriends" or privacy_rules == "friends":
+                    privacy_rules = [raw.types.InputPrivacyValueAllowCloseFriends()]
+                elif privacy_rules == "contacts":
+                    privacy_rules = [raw.types.InputPrivacyValueAllowContacts()]
+                elif privacy_rules == "all":
+                    privacy_rules = [raw.types.InputPrivacyValueAllowAll()]
+                else:
+                    raise Exception(f"Invalid str value specified for privacy_rules: {privacy_rules}")
+            elif isinstance(privacy_rules, list):
+                # a list of input users
+                all_allowed_users = []
+                all_disallowed_users = []
+                correct_privacy_rules = []
+                for current_privacy_rule in privacy_rules:
+                    is_disallowed = isinstance(current_privacy_rule, str) and current_privacy_rule.startswith('!')
+                    if is_disallowed:
+                        current_privacy_rule = current_privacy_rule[1:]
+                    
+                    current_peer = await self.resolve_peer(current_privacy_rule)
+                    if not isinstance(current_peer, pyrogram.raw.base.InputUser):
+                        # yeah well... telegram is gonna return us error anyway...
+                        continue
+                    
+                    if is_disallowed: all_disallowed_users.append(current_peer)
+                    else: all_allowed_users.append(current_peer)
+                
+                if all_allowed_users:
+                    correct_privacy_rules.append(all_allowed_users)
+                if all_disallowed_users:
+                    correct_privacy_rules.append(all_disallowed_users)
+
+                privacy_rules = correct_privacy_rules
             
             while True:
                 try:
                     r = await self.invoke(
                         raw.functions.stories.send_story.SendStory(
-                            peer=await self.resolve_peer("me"),
+                            peer=await self.resolve_peer(chat_id),
                             media=media,
                             privacy_rules=privacy_rules,
                             random_id=self.rnd_id(),
                             pinned=pinned,
                             noforwards=protect_content,
-                            media_areas=[],
+                            media_areas=media_area,
                             period=period,
                             **await utils.parse_caption_entities(self, caption, parse_mode, caption_entities)
                         )
