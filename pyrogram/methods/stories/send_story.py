@@ -284,14 +284,10 @@ class SendStory:
                     await self.save_file(story, file_id=file.id, file_part=e.value)
                 else:
                     for i in r.updates:
-                        if isinstance(i, (raw.types.UpdateNewMessage,
-                                          raw.types.UpdateNewChannelMessage,
-                                          raw.types.UpdateNewScheduledMessage)):
-                            return await types.Message._parse(
-                                self, i.message,
-                                {i.id: i for i in r.users},
-                                {i.id: i for i in r.chats},
-                                is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage)
+                        if isinstance(i, raw.types.UpdateStory):
+                            return await types.Story._parse(
+                                peer=i.peer,
+                                the_story=i.story
                             )
         except StopTransmission:
             return None
