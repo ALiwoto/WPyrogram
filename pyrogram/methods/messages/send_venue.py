@@ -17,11 +17,11 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union
+from typing import Union, List, Optional
 
 import pyrogram
 from pyrogram import raw, utils
-from pyrogram import types
+from pyrogram import types, enums
 
 
 class SendVenue:
@@ -35,8 +35,11 @@ class SendVenue:
         foursquare_id: str = "",
         foursquare_type: str = "",
         disable_notification: bool = None,
-        reply_to_message_id: int = None,
         message_thread_id: int = None,
+        reply_to_message_id: int = None,
+        quote_text: str = None,
+        parse_mode: Optional["enums.ParseMode"] = None,
+        quote_entities: List["types.MessageEntity"] = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
         reply_markup: Union[
@@ -79,11 +82,22 @@ class SendVenue:
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
-
             message_thread_id (``int``, *optional*):
-                If the message is in a thread, ID of the original message.
+                Unique identifier for the target message thread (topic) of the forum.
+                for forum supergroups only.
+
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message
+
+            quote_text (``str``):
+                Text of the quote to be sent.
+
+            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles.
+                You can combine both syntaxes together.
+
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+                List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -105,8 +119,7 @@ class SendVenue:
                     "me", latitude, longitude,
                     "Venue title", "Venue address")
         """
-
-        reply_to = utils.get_reply_head_fm(message_thread_id, reply_to_message_id)
+        quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
         r = await self.invoke(
             raw.functions.messages.SendMedia(
@@ -124,7 +137,12 @@ class SendVenue:
                 ),
                 message="",
                 silent=disable_notification or None,
-                reply_to=reply_to,
+                reply_to=utils.get_reply_to(
+                    reply_to_message_id=reply_to_message_id,
+                    message_thread_id=message_thread_id,
+                    quote_text=quote_text,
+                    quote_entities=quote_entities,
+                ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
