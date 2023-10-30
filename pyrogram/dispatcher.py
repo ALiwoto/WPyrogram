@@ -26,8 +26,8 @@ from pyrogram import utils
 from pyrogram.handlers import (
     CallbackQueryHandler, MessageHandler, EditedMessageHandler, DeletedMessagesHandler,
     UserStatusHandler, RawUpdateHandler, InlineQueryHandler, PollHandler,
-    ChosenInlineResultHandler, ChatMemberUpdatedHandler, ChatJoinRequestHandler,
-    ConversationHandler
+    ChosenInlineResultHandler, ChatMemberUpdatedHandler, ChatJoinRequestHandler, 
+    StoryHandler, ConversationHandler
 )
 from pyrogram.raw.types import (
     UpdateNewMessage, UpdateNewChannelMessage, UpdateNewScheduledMessage,
@@ -36,7 +36,7 @@ from pyrogram.raw.types import (
     UpdateBotCallbackQuery, UpdateInlineBotCallbackQuery,
     UpdateUserStatus, UpdateBotInlineQuery, UpdateMessagePoll,
     UpdateBotInlineSend, UpdateChatParticipant, UpdateChannelParticipant,
-    UpdateBotChatInviteRequester
+    UpdateBotChatInviteRequester, UpdateStory
 )
 
 log = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ class Dispatcher:
     POLL_UPDATES = (UpdateMessagePoll,)
     CHOSEN_INLINE_RESULT_UPDATES = (UpdateBotInlineSend,)
     CHAT_JOIN_REQUEST_UPDATES = (UpdateBotChatInviteRequester,)
+    NEW_STORY_UPDATES = (UpdateStory,)
 
     def __init__(self, client: "pyrogram.Client"):
         self.client = client
@@ -69,7 +70,7 @@ class Dispatcher:
 
         async def message_parser(update, users, chats):
             return (
-                await pyrogram.types.Message._parse(self.client, update.message, users, chats,
+                await pyrogram.types.Message._parse(self.client, update.message, users, chats, None,
                                                     isinstance(update, UpdateNewScheduledMessage)),
                 MessageHandler
             )
@@ -131,6 +132,12 @@ class Dispatcher:
                 ChatJoinRequestHandler
             )
 
+        async def story_parser(update, users, chats):
+            return (
+                await pyrogram.types.Story._parse(self.client, update.story, users, chats, update.peer),
+                StoryHandler
+            )
+
         self.update_parsers = {
             Dispatcher.NEW_MESSAGE_UPDATES: message_parser,
             Dispatcher.EDIT_MESSAGE_UPDATES: edited_message_parser,
@@ -141,7 +148,8 @@ class Dispatcher:
             Dispatcher.POLL_UPDATES: poll_parser,
             Dispatcher.CHOSEN_INLINE_RESULT_UPDATES: chosen_inline_result_parser,
             Dispatcher.CHAT_MEMBER_UPDATES: chat_member_updated_parser,
-            Dispatcher.CHAT_JOIN_REQUEST_UPDATES: chat_join_request_parser
+            Dispatcher.CHAT_JOIN_REQUEST_UPDATES: chat_join_request_parser,
+            Dispatcher.NEW_STORY_UPDATES: story_parser
         }
 
         self.update_parsers = {key: value for key_tuple, value in self.update_parsers.items() for key in key_tuple}
