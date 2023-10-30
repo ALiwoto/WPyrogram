@@ -62,14 +62,14 @@ class StoryViews(Object):
         self.recent_viewers = recent_viewers
 
     @staticmethod
-    def _parse(client, storyviews: "raw.types.StoryViews") -> "StoryViews":
+    def _parse(client, story_views: "raw.types.StoryViews") -> "StoryViews":
         return StoryViews(
-            views_count=getattr(storyviews, "views_count", None),
-            has_viewers=getattr(storyviews, "has_viewers", None),
-            forwards_count=getattr(storyviews, "forwards_count", None),
+            views_count=getattr(story_views, "views_count", None),
+            has_viewers=getattr(story_views, "has_viewers", None),
+            forwards_count=getattr(story_views, "forwards_count", None),
             reactions=[
                 types.Reaction._parse_count(client, reaction)
-                for reaction in getattr(storyviews, "reactions", [])
+                for reaction in getattr(story_views, "reactions", [])
             ] or None,
-            recent_viewers=getattr(storyviews, "recent_viewers", None) or None,
+            recent_viewers=getattr(story_views, "recent_viewers", None) or None,
         )

@@ -49,14 +49,15 @@ CHANNELS_ADMIN_PUBLIC_TOO_MUCH	You are an administrator of too many public chann
 CHANNELS_TOO_MUCH	You have joined too many channels or supergroups, leave some and try again
 CHANNEL_ADD_INVALID	Internal error.
 CHANNEL_BANNED	The channel is banned
+CHANNEL_FORUM_MISSING	The channel forum is missing
 CHANNEL_INVALID	The channel parameter is invalid
 CHANNEL_PRIVATE	The channel/supergroup is not accessible
 CHANNEL_TOO_LARGE	The channel is too large
 CHAT_ABOUT_NOT_MODIFIED	The chat about text was not modified because you tried to edit it using the same content
 CHAT_ABOUT_TOO_LONG	The chat about text is too long
 CHAT_ADMIN_REQUIRED	The method requires chat admin privileges
-CHAT_DISCUSSION_UNALLOWED	The chat discussion is not allowed
 CHAT_FORWARDS_RESTRICTED	The chat restricts forwarding content
+CHAT_DISCUSSION_UNALLOWED	The chat discussion is not allowed
 CHAT_ID_EMPTY	The provided chat id is empty
 CHAT_ID_INVALID	The chat id being used is invalid or not known yet. Make sure you see the chat before interacting with it
 CHAT_INVALID	The chat is invalid
@@ -319,6 +320,9 @@ THEME_MIME_INVALID	You cannot create this theme because the mime-type is invalid
 TMP_PASSWORD_DISABLED	The temporary password is disabled
 TMP_PASSWORD_INVALID	The temporary password is invalid
 TOKEN_INVALID	The provided token is invalid
+TOPIC_CLOSED	The topic was closed
+TOPIC_DELETED	The topic was deleted
+TOPIC_NOT_MODIFIED	The topic was not modified
 TRANSCRIPTION_FAILED	Telegram is having internal problems. Please try again later to transcribe the audio.
 TTL_DAYS_INVALID	The provided TTL days is invalid
 TTL_MEDIA_INVALID	The media does not support self-destruction
@@ -332,6 +336,7 @@ USERNAME_INVALID	The username is invalid
 USERNAME_NOT_MODIFIED	The username was not modified because you tried to edit it using the same one
 USERNAME_NOT_OCCUPIED	The username is not occupied by anyone
 USERNAME_OCCUPIED	The username is already in use by someone else
+USERNAME_PURCHASE_AVAILABLE	The username is available for purchase on fragment.com
 USERPIC_UPLOAD_REQUIRED	You are required to upload a profile picture for this action
 USERS_TOO_FEW	Not enough users (to create a chat, for example)
 USERS_TOO_MUCH	The maximum number of users has been exceeded (to create a chat, for example)
@@ -367,3 +372,5 @@ WEBDOCUMENT_URL_INVALID	The web document URL is invalid
 WEBPAGE_CURL_FAILED	Telegram server could not fetch the provided URL
 WEBPAGE_MEDIA_EMPTY	The URL doesn't contain any valid media
 YOU_BLOCKED_USER	You blocked this user
+STORIES_NEVER_CREATED	You have never created any stories
+MEDIA_FILE_INVALID	The provided media file is invalid
