@@ -110,7 +110,9 @@ class SendContact:
 
                 await app.send_contact("me", "+1-123-456-7890", "Name")
         """
-        quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
+
+        if quote_text or quote_entities:
+            quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
         r = await self.invoke(
             raw.functions.messages.SendMedia(

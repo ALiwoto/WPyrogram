@@ -194,7 +194,8 @@ class SendVideoNote:
                     ]
                 )
 
-            quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
+            if quote_text or quote_entities:
+                quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
             while True:
                 try:

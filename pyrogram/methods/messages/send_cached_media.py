@@ -117,7 +117,9 @@ class SendCachedMedia:
 
                 await app.send_cached_media("me", file_id)
         """
-        quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
+
+        if quote_text or quote_entities:
+            quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
         peer = await self.resolve_peer(chat_id)
         r = await self.invoke(
