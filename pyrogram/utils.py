@@ -95,13 +95,14 @@ def get_input_media_from_file_id(
 
 
 async def parse_messages(
-    client,
+    client: "pyrogram.Client",
     messages: "raw.types.messages.Messages",
     replies: int = 1
 ) -> List["types.Message"]:
-    users = {i.id: i for i in messages.users}
-    chats = {i.id: i for i in messages.chats}
-    topics = {i.id: i for i in messages.topics} if hasattr(messages, "topics") else None
+    users = {i.id: i for i in messages.users if hasattr(i, "id")}
+    chats = {i.id: i for i in messages.chats  if hasattr(i, "id")}
+    topics = {i.id: i for i in messages.topics if hasattr(i, "id")} \
+        if hasattr(messages, "topics") else None
 
     if not messages.messages:
         return types.List()
@@ -113,7 +114,7 @@ async def parse_messages(
 
     if replies:
         messages_with_replies = {
-            i.id: i.reply_to.reply_to_msg_id
+            i.id: i.reply_to
             for i in messages.messages
             if not isinstance(i, raw.types.MessageEmpty) and i.reply_to and isinstance(i.reply_to, raw.types.MessageReplyHeader)
         }
@@ -128,20 +129,55 @@ async def parse_messages(
             # We need a chat id, but some messages might be empty (no chat attribute available)
             # Scan until we find a message with a chat available (there must be one, because we are fetching replies)
             for m in parsed_messages:
+                if not isinstance(m, pyrogram.types.Message):
+                    continue
+
                 if m.chat:
                     chat_id = m.chat.id
                     break
             else:
                 chat_id = 0
 
-            reply_messages = await client.get_messages(
-                chat_id,
-                reply_to_message_ids=messages_with_replies.keys(),
-                replies=replies - 1
-            )
+            # whether all messages are inside of our current chat
+            is_all_within_chat = True
+            for current_message_id in messages_with_replies:
+                if messages_with_replies[current_message_id].reply_to_peer_id:
+                    is_all_within_chat = False
+                    break
+            
+            reply_messages: List[pyrogram.types.Message] = []
+            if is_all_within_chat:
+                # fast path: fetch all messages within the same chat
+                reply_messages = await client.get_messages(
+                    chat_id,
+                    reply_to_message_ids=messages_with_replies.keys(),
+                    replies=replies - 1
+                )
+            else:
+                # slow path: fetch all messages individually
+                for current_message_id in messages_with_replies:
+                    target_reply_to = messages_with_replies[current_message_id]
+                    to_be_added_msg = None
+                    the_chat_id = chat_id
+                    if target_reply_to.reply_to_peer_id:
+                        the_chat_id = f"-100{target_reply_to.reply_to_peer_id.channel_id}"
+                    to_be_added_msg = await client.get_messages(
+                        chat_id=the_chat_id,
+                        message_ids=target_reply_to.reply_to_msg_id,
+                        replies=replies - 1
+                    )
+                    if isinstance(to_be_added_msg, list):
+                        for current_to_be_added in to_be_added_msg:
+                            reply_messages.append(current_to_be_added)
+                    elif to_be_added_msg:
+                        reply_messages.append(to_be_added_msg)
 
             for message in parsed_messages:
-                reply_id = messages_with_replies.get(message.id, None)
+                reply_to = messages_with_replies.get(message.id, None)
+                if not reply_to:
+                    continue
+
+                reply_id = reply_to.reply_to_msg_id
 
                 for reply in reply_messages:
                     if reply.id == reply_id:
@@ -150,6 +186,9 @@ async def parse_messages(
 
         if message_reply_to_story:
             for m in parsed_messages:
+                if not isinstance(m, pyrogram.types.Message):
+                    continue
+
                 if m.chat:
                     chat_id = m.chat.id
                     break
