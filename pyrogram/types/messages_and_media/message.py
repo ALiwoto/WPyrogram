@@ -1072,6 +1072,14 @@ class Message(Object, Update):
             return f"https://t.me/{self.chat.username}/{self.id}"
         else:
             return f"https://t.me/c/{utils.get_channel_id(self.chat.id)}/{self.id}"
+    
+    @property
+    def message_id(self) -> int:
+        return self.id
+    
+    @property
+    def chat_id(self) -> int:
+        return self.chat.id
 
     async def get_media_group(self) -> List["types.Message"]:
         """Bound method *get_media_group* of :obj:`~pyrogram.types.Message`.
