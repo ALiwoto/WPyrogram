@@ -32,6 +32,7 @@ class SendGame:
         disable_notification: bool = None,
         message_thread_id: int = None,
         reply_to_message_id: int = None,
+        reply_to_chat_id: int = None,
         protect_content: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
@@ -92,6 +93,7 @@ class SendGame:
                 silent=disable_notification or None,
                 reply_to=utils.get_reply_to(
                     reply_to_message_id=reply_to_message_id,
+                    reply_to_peer=await self.resolve_peer(reply_to_chat_id) if reply_to_chat_id else None,
                     message_thread_id=message_thread_id
                 ),
                 random_id=self.rnd_id(),
