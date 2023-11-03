@@ -1023,7 +1023,7 @@ class Message(Object, Update):
                                 hasattr(message.reply_to.reply_to_peer_id, "channel_id") and \
                                 message.reply_to.reply_to_peer_id.channel_id
                             if is_cross_chat:
-                                key = (f"-100{message.reply_to.reply_to_peer_id.channel_id}",
+                                key = (utils.get_channel_id(message.reply_to.reply_to_peer_id.channel_id),
                                     message.reply_to.reply_to_msg_id)
                                 setattr(parsed_message, "is_cross_chat", True)
                             else:
@@ -1040,7 +1040,7 @@ class Message(Object, Update):
                                 else:
                                     reply_to_message = await client.get_messages(
                                         chat_id=key[0],
-                                        reply_to_message_ids=key[1],
+                                        reply_to_message_ids=message.id,
                                         replies=replies - 1
                                     )
                             if reply_to_message and not reply_to_message.forum_topic_created:
