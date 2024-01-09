@@ -16,29 +16,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from pyrogram import raw
-from ..object import Object
+from .apply_boost import ApplyBoost
+from .get_boosts_status import GetBoostsStatus
+from .get_boosts import GetBoosts
 
-
-class PeerChannel(Object):
-    """A PeerChannel.
-
-
-    Parameters:
-        channel_id (``int``):
-            Id of the channel.
-    """
-
-    def __init__(
-        self, *,
-        channel_id: int
-    ):
-        super().__init__()
-
-        self.channel_id = channel_id
-
-    @staticmethod
-    def _parse(action: "raw.types.PeerChannel") -> "PeerChannel":
-        return PeerChannel(
-            channel_id=getattr(action, "channel_id", None)
-        )
+class Premium(
+    ApplyBoost,
+    GetBoostsStatus,
+    GetBoosts
+):
+    pass

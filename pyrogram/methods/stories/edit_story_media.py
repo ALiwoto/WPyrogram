@@ -17,55 +17,44 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
-from typing import List, Union, BinaryIO, Callable
+from typing import Union, BinaryIO, Callable
 
 import pyrogram
-from pyrogram import enums, raw, types, utils, StopTransmission
+from pyrogram import raw, types, utils, StopTransmission
 from pyrogram.errors import FilePartMissing
 
-class EditStory:
-    async def edit_story(
+class EditStoryMedia:
+    async def edit_story_media(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         story_id: int,
         media: Union[str, BinaryIO] = None,
-        caption: str = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
         thumb: Union[str, BinaryIO] = None,
         supports_streaming: bool = True,
         file_name: str = None,
-        privacy: "enums.StoriesPrivacyRules" = None,
-        allowed_users: List[Union[int, str]] = None,
-        disallowed_users: List[Union[int, str]] = None,
-        parse_mode: "enums.ParseMode" = None,
-        caption_entities: List["types.MessageEntity"] = None,
         progress: Callable = None,
         progress_args: tuple = ()
     ) -> "types.Story":
-        """Edit story.
+        """Edit story media.
 
         .. include:: /_includes/usable-by/users.rst
-
-        Note: You must pass one of following paramater *animation*, *photo*, *video*
 
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
-                For a contact that exists in your Telegram address book you can use his phone number (str).
+
+            story_id (``int``):
+                Story identifier in the chat specified in chat_id.
 
             media (``str`` | ``BinaryIO``, *optional*):
                 Video or photo to send.
                 Pass a file_id as string to send a animation that exists on the Telegram servers,
-                pass an HTTP URL as a string for Telegram to get a animation from the Internet,
                 pass a file path as string to upload a new animation that exists on your local machine, or
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
-
-            caption (``str``, *optional*):
-                Story caption, 0-1024 characters.
 
             duration (``int``, *optional*):
                 Duration of sent video in seconds.
@@ -82,28 +71,6 @@ class EditStory:
                 A thumbnail's width and height should not exceed 320 pixels.
                 Thumbnails can't be reused and can be only uploaded as a new file.
 
-            privacy (:obj:`~pyrogram.enums.StoriesPrivacyRules`, *optional*):
-                Story privacy.
-                Defaults to :obj:`~pyrogram.enums.StoriesPrivacyRules.PUBLIC`
-
-            allowed_users (List of ``int``, *optional*):
-                List of user_id or chat_id of chat users who are allowed to view stories.
-                Note: chat_id available only with :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS`.
-                Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.CLOSE_FRIENDS`
-                and :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS` only
-
-            disallowed_users (List of ``int``, *optional*):
-                List of user_id whos disallow to view the stories.
-                Note: Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.PUBLIC`
-                and :obj:`~pyrogram.enums.StoriesPrivacyRules.CONTACTS` only
-
-            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
-                By default, texts are parsed using both Markdown and HTML styles.
-                You can combine both syntaxes together.
-
-            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
-                List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
-
             progress (``Callable``, *optional*):
                 Pass a callback function to view the file transmission progress.
                 The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
@@ -116,24 +83,18 @@ class EditStory:
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Returns:
-            :obj:`~pyrogram.types.Story` a single story is returned.
+            :obj:`~pyrogram.types.Story`: On success, the edited story is returned.
 
         Example:
             .. code-block:: python
 
-                # Send new photo story
-                photo_id = "abcd12345"
-                await app.edit_story(meida=photo_id, caption='Hello guys.')
+                # Replace the current media with a local photo
+                await app.edit_story_media(chat_id, story_id, "new_photo.jpg")
 
-        Raises:
-            ValueError: In case of invalid arguments.
+                # Replace the current media with a local video
+                await app.edit_story_media(chat_id, story_id, "new_video.mp4")
         """
         # TODO: media_areas
-
-        if privacy:
-            privacy_rules = [types.StoriesPrivacyRules(type=privacy)]
-
-        message, entities = (await utils.parse_text_entities(self, caption, parse_mode, caption_entities)).values()
 
         try:
             if isinstance(media, str):
@@ -158,16 +119,6 @@ class EditStory:
                     else:
                         media = raw.types.InputMediaUploadedPhoto(
                             file=file,
-                        )
-                elif re.match("^https?://", media):
-                    mime_type = self.guess_mime_type(media)
-                    if mime_type == "video/mp4":
-                        media = raw.types.InputMediaDocumentExternal(
-                            url=media,
-                        )
-                    else:
-                        media = raw.types.InputMediaPhotoExternal(
-                            url=media,
                         )
                 else:
                     media = utils.get_input_media_from_file_id(media)
@@ -195,42 +146,6 @@ class EditStory:
                         file=file,
                     )
 
-            privacy_rules = []
-
-            if privacy:
-                if privacy == enums.StoriesPrivacyRules.PUBLIC:
-                    privacy_rules.append(raw.types.InputPrivacyValueAllowAll())
-                    if disallowed_users:
-                        users = [await self.resolve_peer(user_id) for user_id in disallowed_users]
-                        privacy_rules.append(raw.types.InputPrivacyValueDisallowUsers(users=users))
-                elif privacy == enums.StoriesPrivacyRules.CONTACTS:
-                    privacy_rules = [raw.types.InputPrivacyValueAllowContacts()]
-                    if disallowed_users:
-                        users = [await self.resolve_peer(user_id) for user_id in disallowed_users]
-                        privacy_rules.append(raw.types.InputPrivacyValueDisallowUsers(users=users))
-                elif privacy == enums.StoriesPrivacyRules.CLOSE_FRIENDS:
-                    privacy_rules = [raw.types.InputPrivacyValueAllowCloseFriends()]
-                    if allowed_users:
-                        users = [await self.resolve_peer(user_id) for user_id in allowed_users]
-                        privacy_rules.append(raw.types.InputPrivacyValueAllowUsers(users=users))
-                elif privacy == enums.StoriesPrivacyRules.SELECTED_USERS:
-                    _allowed_users = []
-                    _allowed_chats = []
-
-                    for user in allowed_users:
-                        peer = await self.resolve_peer(user)
-                        if isinstance(peer, raw.types.InputPeerUser):
-                            _allowed_users.append(peer)
-                        elif isinstance(peer, raw.types.InputPeerChat):
-                            _allowed_chats.append(peer)
-
-                    if _allowed_users:
-                        privacy_rules.append(raw.types.InputPrivacyValueAllowUsers(users=_allowed_users))
-                    if _allowed_chats:
-                        privacy_rules.append(raw.types.InputPrivacyValueAllowChatParticipants(chats=_allowed_chats))
-            else:
-                privacy_rules.append(raw.types.InputPrivacyValueAllowAll())
-
             while True:
                 try:
                     r = await self.invoke(
@@ -238,9 +153,6 @@ class EditStory:
                             peer=await self.resolve_peer(chat_id),
                             id=story_id,
                             media=media,
-                            caption=message,
-                            entities=entities,
-                            privacy_rules=privacy_rules,
                         )
                     )
                 except FilePartMissing as e:

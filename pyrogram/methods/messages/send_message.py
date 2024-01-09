@@ -34,11 +34,13 @@ class SendMessage:
         disable_web_page_preview: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        invert_media: bool = None,
         reply_to_message_id: int = None,
-        reply_to_chat_id: int = None,
+        reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        quote_offset: int = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
         reply_markup: Union[
@@ -77,19 +79,29 @@ class SendMessage:
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
-                for forum supergroups only.
+                For supergroups only.
+
+            invert_media (``bool``, *optional*):
+                If True, link preview will be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
+            reply_to_chat_id (``int``, *optional*):
+                If the message is a reply, ID of the original chat.
+
             reply_to_story_id (``int``, *optional*):
                 Unique identifier for the target story.
 
-            quote_text (``str``):
+            quote_text (``str``, *optional*):
                 Text of the quote to be sent.
 
-            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -141,8 +153,7 @@ class SendMessage:
 
         message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
-        if quote_text or quote_entities:
-            quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
+        quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
         peer = await self.resolve_peer(chat_id)
         r = await self.invoke(
@@ -150,6 +161,7 @@ class SendMessage:
                 peer=peer,
                 no_webpage=disable_web_page_preview or None,
                 silent=disable_notification or None,
+                invert_media=invert_media or None,
                 reply_to=utils.get_reply_to(
                     reply_to_message_id=reply_to_message_id,
                     message_thread_id=message_thread_id,
@@ -157,6 +169,7 @@ class SendMessage:
                     reply_to_story_id=reply_to_story_id,
                     quote_text=quote_text,
                     quote_entities=quote_entities,
+                    quote_offset=quote_offset,
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),

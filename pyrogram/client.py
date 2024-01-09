@@ -44,12 +44,12 @@ from pyrogram.errors import CDNFileHashMismatch
 from pyrogram.errors import (
     SessionPasswordNeeded,
     VolumeLocNotFound, ChannelPrivate,
-    BadRequest
+    BadRequest, AuthBytesInvalid
 )
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
 from pyrogram.session import Auth, Session
-from pyrogram.storage import FileStorage, MemoryStorage
+from pyrogram.storage import Storage, FileStorage, MemoryStorage
 from pyrogram.types import User, TermsOfService, ListenerStopped, ListenerTimeout, ListenerTypes
 from pyrogram.utils import ainput, PyromodConfig
 from .dispatcher import Dispatcher
@@ -177,6 +177,10 @@ class Client(Methods):
             Set the maximum amount of concurrent transmissions (uploads & downloads).
             A value that is too high may result in network related issues.
             Defaults to 1.
+
+        storage_engine (:obj:`~pyrogram.storage.Storage`, *optional*):
+            Pass an instance of your own implementation of session storage engine.
+            Useful when you want to store your session in databases like Mongo, Redis, etc.
     """
 
     APP_VERSION = f"Pyrogram {__version__}"
@@ -225,7 +229,8 @@ class Client(Methods):
         takeout: bool = None,
         sleep_threshold: int = Session.SLEEP_THRESHOLD,
         hide_password: bool = False,
-        max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS
+        max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS,
+        storage_engine: Storage = None
     ):
         super().__init__()
 
@@ -261,6 +266,8 @@ class Client(Methods):
             self.storage = MemoryStorage(self.name, self.session_string)
         elif self.in_memory:
             self.storage = MemoryStorage(self.name)
+        elif isinstance(storage_engine, Storage):
+            self.storage = storage_engine
         else:
             self.storage = FileStorage(self.name, self.workdir)
 
@@ -625,15 +632,15 @@ class Client(Methods):
                 is_min = True
                 continue
 
-            username = None
+            usernames = None
             phone_number = None
 
             if isinstance(peer, raw.types.User):
                 peer_id = peer.id
                 access_hash = peer.access_hash
-                username = (
-                    peer.username.lower() if peer.username
-                    else peer.usernames[0].username.lower() if peer.usernames
+                usernames = (
+                    [peer.username.lower()] if peer.username
+                    else [username.username.lower() for username in peer.usernames] if peer.usernames
                     else None
                 )
                 phone_number = peer.phone
@@ -645,9 +652,9 @@ class Client(Methods):
             elif isinstance(peer, raw.types.Channel):
                 peer_id = utils.get_channel_id(peer.id)
                 access_hash = peer.access_hash
-                username = (
-                    peer.username.lower() if peer.username
-                    else peer.usernames[0].username.lower() if peer.usernames
+                usernames = (
+                    [peer.username.lower()] if peer.username
+                    else [username.username.lower() for username in peer.usernames] if peer.usernames
                     else None
                 )
                 peer_type = "channel" if peer.broadcast else "supergroup"
@@ -658,7 +665,7 @@ class Client(Methods):
             else:
                 continue
 
-            parsed_peers.append((peer_id, access_hash, peer_type, username, phone_number))
+            parsed_peers.append((peer_id, access_hash, peer_type, usernames, phone_number))
 
         await self.storage.update_peers(parsed_peers)
 
@@ -946,7 +953,7 @@ class Client(Methods):
         offset: int = 0,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> Optional[AsyncGenerator[bytes, None]]:
+    ) -> AsyncGenerator[bytes, None]:
         async with self.get_file_semaphore:
             file_type = file_id.file_type
 
@@ -994,31 +1001,40 @@ class Client(Methods):
 
             dc_id = file_id.dc_id
 
-            session = Session(
-                self, dc_id,
-                await Auth(self, dc_id, await self.storage.test_mode()).create()
-                if dc_id != await self.storage.dc_id()
-                else await self.storage.auth_key(),
-                await self.storage.test_mode(),
-                is_media=True
-            )
-
             try:
-                await session.start()
-
-                if dc_id != await self.storage.dc_id():
-                    exported_auth = await self.invoke(
-                        raw.functions.auth.ExportAuthorization(
-                            dc_id=dc_id
-                        )
+                session = self.media_sessions.get(dc_id)
+                if not session:
+                    session = self.media_sessions[dc_id] = Session(
+                        self, dc_id,
+                        await Auth(self, dc_id, await self.storage.test_mode()).create()
+                        if dc_id != await self.storage.dc_id()
+                        else await self.storage.auth_key(),
+                        await self.storage.test_mode(),
+                        is_media=True
                     )
+                    await session.start()
 
-                    await session.invoke(
-                        raw.functions.auth.ImportAuthorization(
-                            id=exported_auth.id,
-                            bytes=exported_auth.bytes
-                        )
-                    )
+                    if dc_id != await self.storage.dc_id():
+                        for _ in range(3):
+                            exported_auth = await self.invoke(
+                                raw.functions.auth.ExportAuthorization(
+                                    dc_id=dc_id
+                                )
+                            )
+
+                            try:
+                                await session.invoke(
+                                    raw.functions.auth.ImportAuthorization(
+                                        id=exported_auth.id,
+                                        bytes=exported_auth.bytes
+                                    )
+                                )
+                            except AuthBytesInvalid:
+                                continue
+                            else:
+                                break
+                        else:
+                            raise AuthBytesInvalid
 
                 r = await session.invoke(
                     raw.functions.upload.GetFile(
@@ -1152,7 +1168,11 @@ class Client(Methods):
             except Exception as e:
                 log.exception(e)
             finally:
-                await session.stop()
+                if session:
+                    try:
+                        await session.stop()
+                        self.media_sessions.pop(session.dc_id)
+                    except: pass
 
     def guess_mime_type(self, filename: str) -> Optional[str]:
         return self.mimetypes.guess_type(filename)[0]

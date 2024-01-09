@@ -19,6 +19,7 @@
 import asyncio
 import functools
 import inspect
+import datetime
 import io
 import logging
 import math
@@ -139,16 +140,23 @@ class SaveFile:
             is_missing_part = file_id is not None
             file_id = file_id or self.rnd_id()
             md5_sum = md5() if not is_big and not is_missing_part else None
-            session = Session(
-                self, await self.storage.dc_id(), await self.storage.auth_key(),
-                await self.storage.test_mode(), is_media=True
-            )
+            dc_id = await self.storage.dc_id()
+
+            async with self.media_sessions_lock:
+                session = self.media_sessions.get(dc_id)
+                if not session:
+                    session = Session(
+                        self, dc_id, await self.storage.auth_key(),
+                        await self.storage.test_mode(), is_media=True
+                    )
+                    await session.start()
+            
+            session.last_used_time = datetime.datetime.now()
+
             workers = [self.loop.create_task(worker(session)) for _ in range(workers_count)]
             queue = asyncio.Queue(1)
 
             try:
-                await session.start()
-
                 fp.seek(part_size * file_part)
 
                 while True:
@@ -220,7 +228,30 @@ class SaveFile:
 
                 await asyncio.gather(*workers)
 
-                await session.stop()
-
                 if isinstance(path, (str, PurePath)):
                     fp.close()
+
+    async def close_unused_sessions(
+        self: "pyrogram.Client",
+        minutes_passed: int = 20,
+    ) -> int:
+        """Closes all the sessions that haven't been used in last X amount of time.
+        """
+        if not minutes_passed:
+            return None
+        
+        now = datetime.datetime.now()
+        async with self.media_sessions_lock:
+            all_keys = self.media_sessions.keys()
+            for current in all_keys:
+                last_time_used = getattr(self.media_sessions[current], "last_time_used", None)
+
+                if not isinstance(last_time_used, datetime.datetime):
+                    continue
+
+                if (now - last_time_used).seconds > 60*minutes_passed:
+                    current_media = self.media_sessions.pop(current)
+                    if not isinstance(current_media, Session):
+                        continue
+
+                    await current_media.stop()

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncGenerator, Union, Optional
+from typing import AsyncGenerator, Optional
 
 import pyrogram
 from pyrogram import raw
@@ -29,7 +29,7 @@ class GetAllStories:
         next: Optional[bool] = None,
         hidden: Optional[bool] = None,
         state: Optional[str] = None,
-    ) -> Optional[AsyncGenerator["types.Story", None]]:
+    ) -> AsyncGenerator["types.Story", None]:
         """Get all active stories.
 
         .. include:: /_includes/usable-by/users.rst
@@ -56,12 +56,15 @@ class GetAllStories:
             )
         )
 
+        users = {i.id: i for i in r.users}
+        chats = {i.id: i for i in r.chats}
+
         for peer_story in r.peer_stories:
             for story in peer_story.stories:
                 yield await types.Story._parse(
                     self,
                     story,
-                    {i.id: i for i in r.users},
-                    {i.id: i for i in r.chats},
+                    users,
+                    chats,
                     peer_story.peer
                 )

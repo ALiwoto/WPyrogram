@@ -19,6 +19,7 @@
 import asyncio
 import bisect
 import logging
+import datetime
 import os
 from hashlib import sha1
 from io import BytesIO
@@ -58,6 +59,9 @@ class Session:
         429: "transport flood",
         444: "invalid DC"
     }
+
+    # last time used date of this session.
+    last_used_time: datetime.datetime = None
 
     def __init__(
         self,

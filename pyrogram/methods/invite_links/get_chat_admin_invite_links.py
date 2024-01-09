@@ -30,13 +30,13 @@ class GetChatAdminInviteLinks:
         admin_id: Union[int, str],
         revoked: bool = False,
         limit: int = 0,
-    ) -> Optional[AsyncGenerator["types.ChatInviteLink", None]]:
+    ) -> AsyncGenerator["types.ChatInviteLink", None]:
         """Get the invite links created by an administrator in a chat.
 
         .. note::
 
             As an administrator you can only get your own links you have exported.
-            As the chat or channel owner you can get everyones links.
+            As the chat or channel owner you can get everyone's links.
 
         .. include:: /_includes/usable-by/users.rst
 

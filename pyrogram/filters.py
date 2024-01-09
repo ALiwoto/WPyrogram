@@ -184,6 +184,17 @@ bot = create(bot_filter)
 
 # endregion
 
+# region sender_chat_filter
+async def sender_chat_filter(_, __, m: Message):
+    return bool(m.sender_chat)
+
+
+sender_chat = create(sender_chat_filter)
+"""Filter messages coming from sender chat."""
+
+
+# endregion
+
 # region incoming_filter
 async def incoming_filter(_, __, m: Message):
     return not m.outgoing
@@ -317,6 +328,50 @@ game = create(game_filter)
 
 # endregion
 
+# region giveaway_filter
+async def giveaway_filter(_, __, m: Message):
+    return bool(m.giveaway)
+
+
+giveaway = create(giveaway_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.Giveaway` objects."""
+
+
+# endregion
+
+# region giveaway_result_filter
+async def giveaway_result_filter(_, __, m: Message):
+    return bool(m.giveaway_result)
+
+
+giveaway_result = create(giveaway_result_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.GiveawayResult` objects."""
+
+
+# endregion
+
+# region gift_code_filter
+async def gift_code_filter(_, __, m: Message):
+    return bool(m.gift_code)
+
+
+gift_code = create(gift_code_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.GiftCode` objects."""
+
+
+# endregion
+
+# region requested_chats_filter
+async def requested_chats_filter(_, __, m: Message):
+    return bool(m.requested_chats)
+
+
+requested_chats = create(requested_chats_filter)
+"""Filter service messages for request chats."""
+
+
+# endregion
+
 # region video_filter
 async def video_filter(_, __, m: Message):
     return bool(m.video)
@@ -424,6 +479,7 @@ async def dice_filter(_, __, m: Message):
 dice = create(dice_filter)
 """Filter messages that contain :obj:`~pyrogram.types.Dice` objects."""
 
+
 # endregion
 
 # region quote_filter
@@ -433,6 +489,7 @@ async def quote_filter(_, __, m: Message):
 
 quote = create(quote_filter)
 """Filter quote messages."""
+
 
 # endregion
 
@@ -479,6 +536,28 @@ async def channel_filter(_, __, u: Update):
 
 channel = create(channel_filter)
 """Filter messages sent in channels."""
+
+
+# endregion
+
+# region forum_filter
+async def forum_filter(_, __, m: Message):
+    return bool(m.chat and m.chat.is_forum)
+
+
+forum = create(forum_filter)
+"""Filter messages sent in forums."""
+
+
+# endregion
+
+# region story_filter
+async def story_filter(_, __, m: Message):
+    return bool(m.story)
+
+
+story = create(story_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.Story` objects."""
 
 
 # endregion
@@ -655,6 +734,17 @@ async def via_bot_filter(_, __, m: Message):
 
 via_bot = create(via_bot_filter)
 """Filter messages sent via inline bots"""
+
+
+# endregion
+
+# region admin_filter
+async def admin_filter(_, __, m: Message):
+    return bool(m.chat and m.chat.is_admin)
+
+
+admin = create(admin_filter)
+"""Filter chats where you have admin rights"""
 
 
 # endregion

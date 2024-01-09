@@ -16,29 +16,39 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import pyrogram
 from pyrogram import raw
-from ..object import Object
 
 
-class PeerUser(Object):
-    """A PeerUser.
+class UpdateStatus:
+    async def update_status(
+        self: "pyrogram.Client",
+        offline: bool = False
+    ) -> bool:
+        """Update your profile status.
 
+        .. include:: /_includes/usable-by/users.rst
 
-    Parameters:
-        user_id (``int``):
-            Id of the user.
-    """
+        Parameters:
+            offline (``bool``):
+                The new status. Pass True to appear offline.
 
-    def __init__(
-        self, *,
-        user_id: int
-    ):
-        super().__init__()
+        Returns:
+            ``bool``: True on success.
 
-        self.user_id = user_id
+        Example:
+            .. code-block:: python
 
-    @staticmethod
-    def _parse(action: "raw.types.PeerUser") -> "PeerUser":
-        return PeerUser(
-            user_id=getattr(action, "user_id", None)
+                # Change status to online
+                await app.update_status()
+
+                # Change status to offline
+                await app.update_status(offline=True)
+        """
+        r = await self.invoke(
+            raw.functions.account.UpdateStatus(
+                offline=offline
+            )
         )
+
+        return bool(r)

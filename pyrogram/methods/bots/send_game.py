@@ -32,7 +32,7 @@ class SendGame:
         disable_notification: bool = None,
         message_thread_id: int = None,
         reply_to_message_id: int = None,
-        reply_to_chat_id: int = None,
+        reply_to_chat_id: Union[int, str] = None,
         protect_content: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
@@ -60,10 +60,13 @@ class SendGame:
 
             message_thread_id (``int``, *optional*):
                 Unique identifier of a message thread to which the message belongs.
-                for supergroups only
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
+
+            reply_to_chat_id (``int``, *optional*):
+                If the message is a reply, ID of the original chat.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.

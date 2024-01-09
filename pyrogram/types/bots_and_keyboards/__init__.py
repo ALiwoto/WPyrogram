@@ -39,6 +39,10 @@ from .menu_button_default import MenuButtonDefault
 from .menu_button_web_app import MenuButtonWebApp
 from .reply_keyboard_markup import ReplyKeyboardMarkup
 from .reply_keyboard_remove import ReplyKeyboardRemove
+from .request_channel_info import RequestChannelInfo
+from .request_chat_info import RequestChatInfo
+from .request_user_info import RequestUserInfo
+from .request_poll_info import RequestPollInfo
 from .sent_web_app_message import SentWebAppMessage
 from .web_app_info import WebAppInfo
 
@@ -52,6 +56,10 @@ __all__ = [
     "KeyboardButton",
     "ReplyKeyboardMarkup",
     "ReplyKeyboardRemove",
+    "RequestChannelInfo",
+    "RequestChatInfo",
+    "RequestUserInfo",
+    "RequestPollInfo",
     "LoginUrl",
     "BotCommand",
     "BotCommandScope",

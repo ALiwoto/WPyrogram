@@ -20,6 +20,7 @@ from typing import Union
 
 import pyrogram
 from pyrogram import raw
+from pyrogram import types
 
 
 class ApplyBoost:
@@ -29,14 +30,14 @@ class ApplyBoost:
     ) -> bool:
         """Apply boost
 
-        .. include:: /_includes/usable-by/users-bots.rst
+        .. include:: /_includes/usable-by/users.rst
 
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
         Returns:
-            ``str``: On success, a bool is returned.
+            :obj:`~pyrogram.types.MyBoost`: On success, a boost object is returned.
 
         Example:
             .. code-block:: python
@@ -45,9 +46,14 @@ class ApplyBoost:
                 app.apply_boost(chat_id)
         """
         r = await self.invoke(
-            raw.functions.stories.ApplyBoost(
+            raw.functions.premium.ApplyBoost(
                 peer=await self.resolve_peer(chat_id),
             )
         )
 
-        return r
+        return types.MyBoost._parse(
+            self,
+            r.my_boosts[0],
+            {i.id: i for i in r.users},
+            {i.id: i for i in r.chats}
+        )

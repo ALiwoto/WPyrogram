@@ -24,6 +24,9 @@ from .auto_name import AutoName
 class MessageServiceType(AutoName):
     """Message service type enumeration used in :obj:`~pyrogram.types.Message`."""
 
+    CUSTOM_ACTION = auto()
+    "Custom action"
+
     NEW_CHAT_MEMBERS = auto()
     "New members join"
 
@@ -75,6 +78,12 @@ class MessageServiceType(AutoName):
     GAME_HIGH_SCORE = auto()
     "Game high score"
 
+    GIVEAWAY_LAUNCH = auto()
+    "Giveaway launch"
+
+    GIFT_CODE = auto()
+    "Gift code"
+
     VIDEO_CHAT_STARTED = auto()
     "Video chat started"
 
@@ -89,3 +98,6 @@ class MessageServiceType(AutoName):
 
     WEB_APP_DATA = auto()
     "Web app data"
+
+    REQUESTED_CHAT = auto()
+    "Requested chat"

@@ -39,11 +39,23 @@ class Story(Object, Update):
         sender_chat (:obj:`~pyrogram.types.Chat`, *optional*):
             Sender of the story, sent on behalf of a chat.
 
+        date (:py:obj:`~datetime.datetime`, *optional*):
+            Date the story was sent.
+
         chat (:obj:`~pyrogram.types.Chat`, *optional*):
             Conversation the story belongs to.
 
-        date (:py:obj:`~datetime.datetime`, *optional*):
-            Date the story was sent.
+        forward_from (:obj:`~pyrogram.types.User`, *optional*):
+            For forwarded stories, sender of the original story.
+
+        forward_sender_name (``str``, *optional*):
+            For stories forwarded from users who have hidden their accounts, name of the user.
+
+        forward_from_chat (:obj:`~pyrogram.types.Chat`, *optional*):
+            For stories forwarded from channels, information about the original channel.
+
+        forward_from_story_id (``int``, *optional*):
+            For stories forwarded from channels, identifier of the original story in the channel.
 
         expire_date (:py:obj:`~datetime.datetime`, *optional*):
             Date the story will be expired.
@@ -51,7 +63,7 @@ class Story(Object, Update):
         media (:obj:`~pyrogram.enums.MessageMediaType`, *optional*):
             The media type of the Story.
             This field will contain the enumeration type of the media message.
-            You can use ``media = getattr(message, message.media.value)`` to access the media message.
+            You can use ``media = getattr(story, story.media.value)`` to access the media message.
 
         has_protected_content (``bool``, *optional*):
             True, if the story can't be forwarded.
@@ -86,8 +98,11 @@ class Story(Object, Update):
         caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the caption.
 
-        views (:obj:`~pyrogram.types.StoryViews`, *optional*):
+        views (``int``, *optional*):
             Stories views.
+
+        forwards (``int``, *optional*):
+            Stories forwards.
 
         privacy (:obj:`~pyrogram.enums.StoryPrivacyRules`, *optional*):
             Story privacy.
@@ -97,6 +112,17 @@ class Story(Object, Update):
 
         disallowed_users (List of ``int`` | ``str``, *optional*):
             List of user_ids whos denied to view the story.
+
+        reactions (List of :obj:`~pyrogram.types.Reaction`):
+            List of the reactions to this story.
+
+        skipped (``bool``, *optional*):
+            The story is skipped.
+            A story can be skipped in case it was skipped.
+
+        deleted (``bool``, *optional*):
+            The story is deleted.
+            A story can be deleted in case it was deleted or you tried to retrieve a story that doesn't exist yet.
     """
 
     # TODO: Add Media Areas
@@ -108,10 +134,14 @@ class Story(Object, Update):
         id: int,
         from_user: "types.User" = None,
         sender_chat: "types.Chat" = None,
-        chat: "types.Chat" = None,
         date: datetime = None,
+        chat: "types.Chat" = None,
+        forward_from: "types.User" = None,
+        forward_sender_name: str = None,
+        forward_from_chat: "types.Chat" = None,
+        forward_from_story_id: int = None,
         expire_date: datetime = None,
-        media: "enums.MessageMediaType",
+        media: "enums.MessageMediaType" = None,
         has_protected_content: bool = None,
         photo: "types.Photo" = None,
         video: "types.Video" = None,
@@ -123,18 +153,26 @@ class Story(Object, Update):
         selected_contacts: bool = None,
         caption: str = None,
         caption_entities: List["types.MessageEntity"] = None,
-        views: "types.StoryViews" = None,
-        privacy: "enums.StoryPrivacy" = None,
+        views: int = None,
+        forwards: int = None,
+        privacy: "enums.StoryPrivacyRules" = None,
         allowed_users: List[Union[int, str]] = None,
         disallowed_users: List[Union[int, str]] = None,
+        reactions: List["types.Reaction"] = None,
+        skipped: bool = None,
+        deleted: bool = None
     ):
         super().__init__(client)
 
         self.id = id
         self.from_user = from_user
         self.sender_chat = sender_chat
-        self.chat = chat
         self.date = date
+        self.chat = chat
+        self.forward_from = forward_from
+        self.forward_sender_name = forward_sender_name
+        self.forward_from_chat = forward_from_chat
+        self.forward_from_story_id = forward_from_story_id
         self.expire_date = expire_date
         self.media = media
         self.has_protected_content = has_protected_content
@@ -149,51 +187,33 @@ class Story(Object, Update):
         self.caption = caption
         self.caption_entities = caption_entities
         self.views = views
+        self.forwards = forwards
         self.privacy = privacy
         self.allowed_users = allowed_users
         self.disallowed_users = disallowed_users
+        self.reactions = reactions
+        self.skipped = skipped
+        self.deleted = deleted
 
     @staticmethod
     async def _parse(
         client: "pyrogram.Client",
-        stories: raw.base.StoryItem,
+        story: raw.types.StoryItem,
         users: dict,
         chats: dict,
         peer: Union["raw.types.PeerChannel", "raw.types.PeerUser"]
     ) -> "Story":
-        if isinstance(stories, raw.types.StoryItemSkipped):
-            return await types.StorySkipped._parse(client, stories, users, chats, peer)
-        if isinstance(stories, raw.types.StoryItemDeleted):
-            return await types.StoryDeleted._parse(client, stories, users, chats, peer)
-
-        entities = [e for e in (types.MessageEntity._parse(client, entity, {}) for entity in stories.entities) if e]
-
-        photo = None
-        video = None
-        from_user = None
-        sender_chat = None
-        chat = None
-        privacy = None
-        allowed_users = None
-        disallowed_users = None
-        media_type = None
-
-        if isinstance(stories.media, raw.types.MessageMediaPhoto):
-            photo = types.Photo._parse(client, stories.media.photo, stories.media.ttl_seconds)
-            media_type = enums.MessageMediaType.PHOTO
-        else:
-            doc = stories.media.document
-            attributes = {type(i): i for i in doc.attributes}
-            video_attributes = attributes.get(raw.types.DocumentAttributeVideo, None)
-            video = types.Video._parse(client, doc, video_attributes, None)
-            media_type = enums.MessageMediaType.VIDEO
-
         if isinstance(peer, raw.types.InputPeerSelf):
             r = await client.invoke(raw.functions.users.GetUsers(id=[raw.types.InputPeerSelf()]))
             peer_id = r[0].id
             users.update({i.id: i for i in r})
-        elif isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerChannel)):
-            peer_id = utils.get_input_peer_id(peer)
+        elif isinstance(peer, raw.types.InputPeerUser):
+            peer_id = utils.get_raw_peer_id(peer)
+        elif isinstance(peer, raw.types.InputPeerChannel):
+            peer_id = utils.get_raw_peer_id(peer)
+            if peer_id not in chats:
+                r = await client.invoke(raw.functions.channels.GetChannels(id=[peer]))
+                chats.update({peer_id: r.chats[0]})
         else:
             peer_id = utils.get_raw_peer_id(peer)
 
@@ -211,9 +231,64 @@ class Story(Object, Update):
             else:
                 users.update({i.id: i for i in r})
 
+        photo = None
+        video = None
+        from_user = None
+        sender_chat = None
+        chat = None
+        privacy = None
+        allowed_users = None
+        disallowed_users = None
+        media_type = None
+        views = None
+        forwards = None
+        reactions = None
+
         from_user = types.User._parse(client, users.get(peer_id, None))
         sender_chat = types.Chat._parse_channel_chat(client, chats[peer_id]) if not from_user else None
         chat = sender_chat if not from_user else types.Chat._parse_user_chat(client, users.get(peer_id, None))
+
+        if isinstance(story, raw.types.StoryItemDeleted):
+            return Story(client=client, id=story.id, deleted=True, from_user=from_user, sender_chat=sender_chat, chat=chat)
+        if isinstance(story, raw.types.StoryItemSkipped):
+            return Story(client=client, id=story.id, skipped=True, from_user=from_user, sender_chat=sender_chat, chat=chat)
+        if isinstance(story, raw.types.MessageMediaStory):
+            return Story(client=client, id=story.id, from_user=from_user, sender_chat=sender_chat, chat=chat)
+
+        forward_from = None
+        forward_sender_name = None
+        forward_from_chat = None
+        forward_from_story_id = None
+
+        forward_header = story.fwd_from  # type: raw.types.StoryFwdHeader
+
+        if forward_header:
+            fwd_raw_peer_id = utils.get_raw_peer_id(forward_header.from_peer)
+            fwd_peer_id = utils.get_peer_id(forward_header.from_peer)
+
+            if fwd_peer_id > 0:
+                forward_from = types.User._parse(client, users[fwd_raw_peer_id])
+            else:
+                forward_from_chat = types.Chat._parse_channel_chat(client, chats[fwd_raw_peer_id])
+                forward_from_story_id = forward_header.story_id
+
+        if story.views:
+            views=getattr(story.views, "views_count", None)
+            forwards=getattr(story.views, "forwards_count", None)
+            reactions=[
+                types.Reaction._parse_count(client, reaction)
+                for reaction in getattr(story.views, "reactions", [])
+            ] or None
+
+        if isinstance(story.media, raw.types.MessageMediaPhoto):
+            photo = types.Photo._parse(client, story.media.photo, story.media.ttl_seconds)
+            media_type = enums.MessageMediaType.PHOTO
+        else:
+            doc = story.media.document
+            attributes = {type(i): i for i in doc.attributes}
+            video_attributes = attributes.get(raw.types.DocumentAttributeVideo, None)
+            video = types.Video._parse(client, doc, video_attributes, None)
+            media_type = enums.MessageMediaType.VIDEO
 
         privacy_map = {
             raw.types.PrivacyValueAllowAll: enums.StoriesPrivacyRules.PUBLIC,
@@ -222,7 +297,7 @@ class Story(Object, Update):
             raw.types.PrivacyValueDisallowAll: enums.StoriesPrivacyRules.SELECTED_USERS,
         }
 
-        for priv in stories.privacy:
+        for priv in story.privacy:
             privacy = privacy_map.get(type(priv), None)
 
             if isinstance(priv, raw.types.PrivacyValueAllowUsers):
@@ -234,29 +309,37 @@ class Story(Object, Update):
             elif isinstance(priv, raw.types.PrivacyValueDisallowChatParticipants):
                 disallowed_users = types.List(types.Chat._parse_chat_chat(client, chats.get(chat_id, None)) for chat_id in priv.chats)
 
+        entities = [e for e in (types.MessageEntity._parse(client, entity, {}) for entity in story.entities) if e]
+
         return Story(
-            id=stories.id,
+            id=story.id,
             from_user=from_user,
             sender_chat=sender_chat,
+            date=utils.timestamp_to_datetime(story.date),
             chat=chat,
-            date=utils.timestamp_to_datetime(stories.date),
-            expire_date=utils.timestamp_to_datetime(stories.expire_date),
+            forward_from=forward_from,
+            forward_sender_name=forward_sender_name,
+            forward_from_chat=forward_from_chat,
+            forward_from_story_id=forward_from_story_id,
+            expire_date=utils.timestamp_to_datetime(story.expire_date),
             media=media_type,
-            has_protected_content=stories.noforwards,
+            has_protected_content=story.noforwards,
             photo=photo,
             video=video,
-            edited=stories.edited,
-            pinned=stories.pinned,
-            public=stories.public,
-            close_friends=stories.close_friends,
-            contacts=stories.contacts,
-            selected_contacts=stories.selected_contacts,
-            caption=stories.caption,
+            edited=story.edited,
+            pinned=story.pinned,
+            public=story.public,
+            close_friends=story.close_friends,
+            contacts=story.contacts,
+            selected_contacts=story.selected_contacts,
+            caption=story.caption,
             caption_entities=entities or None,
-            views=types.StoryViews._parse(client, stories.views) if stories.views else None,
+            views=views,
+            forwards=forwards,
             privacy=privacy,
             allowed_users=allowed_users,
             disallowed_users=disallowed_users,
+            reactions=reactions,
             client=client
         )
 
@@ -1355,22 +1438,13 @@ class Story(Object, Update):
         Raises:
             RPCError: In case of a Telegram RPC error.
         """
-        file_id = None
-
-        if self.photo:
-            file_id = self.photo.file_id
-        elif self.video:
-            file_id = self.video.file_id
-        else:
-            raise ValueError("Unknown media type")
-
         if caption is None:
             caption = self.caption or ""
             caption_entities = self.caption_entities
 
         return await self._client.send_story(
             chat_id=chat_id,
-            media=file_id,
+            media=await self.download(in_memory=True),
             caption=caption,
             period=period,
             protect_content=protect_content,
@@ -1405,15 +1479,9 @@ class Story(Object, Update):
         """
         return await self._client.delete_stories(chat_id=self.chat.id, story_ids=self.id)
 
-    async def edit(
+    async def edit_media(
         self,
         media: Union[str, BinaryIO] = None,
-        privacy: "enums.StoriesPrivacyRules" = None,
-        allowed_users: List[Union[int, str]] = None,
-        disallowed_users: List[Union[int, str]] = None,
-        caption: str = None,
-        parse_mode: "enums.ParseMode" = None,
-        caption_entities: List["types.MessageEntity"] = None
     ) -> "types.Story":
         """Bound method *edit* of :obj:`~pyrogram.types.Story`.
 
@@ -1429,12 +1497,9 @@ class Story(Object, Update):
         Example:
             .. code-block:: python
 
-                await story.edit_caption("hello")
+                await story.edit_media("new_video.mp4")
 
         Parameters:
-            story_id (``int``):
-                Unique identifier (int) of the target story.
-
             media (``str`` | ``BinaryIO``, *optional*):
                 New story media.
                 Pass a file_id as string to send a photo that exists on the Telegram servers,
@@ -1442,46 +1507,16 @@ class Story(Object, Update):
                 pass a file path as string to upload a new photo that exists on your local machine, or
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
 
-            privacy (:obj:`~pyrogram.enums.StoriesPrivacyRules`, *optional*):
-                Story privacy.
-
-            allowed_users (List of ``int``, *optional*):
-                List of user_id or chat_id of chat users who are allowed to view stories.
-                Note: chat_id available only with :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS`.
-                Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.CLOSE_FRIENDS`
-                and :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS` only
-
-            disallowed_users (List of ``int``, *optional*):
-                List of user_id whos disallow to view the stories.
-                Note: Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.PUBLIC`
-                and :obj:`~pyrogram.enums.StoriesPrivacyRules.CONTACTS` only
-
-            caption (``str``, *optional*):
-                Story caption, 0-1024 characters.
-
-            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
-                By default, texts are parsed using both Markdown and HTML styles.
-                You can combine both syntaxes together.
-
-            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
-                List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
-
         Returns:
             On success, the edited :obj:`~pyrogram.types.Story` is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
         """
-        return await self._client.edit_story(
+        return await self._client.edit_story_media(
             chat_id=self.chat.id,
             story_id=self.id,
-            media=media,
-            privacy=privacy,
-            allowed_users=allowed_users,
-            disallowed_users=disallowed_users,
-            caption=caption,
-            parse_mode=parse_mode,
-            caption_entities=caption_entities
+            media=media
         )
 
     async def edit_caption(
@@ -1496,7 +1531,7 @@ class Story(Object, Update):
 
         .. code-block:: python
 
-            await client.edit_story(
+            await client.edit_story_caption(
                 story_id=story.id,
                 caption="hello"
             )
@@ -1523,7 +1558,7 @@ class Story(Object, Update):
         Raises:
             RPCError: In case of a Telegram RPC error.
         """
-        return await self._client.edit_story(
+        return await self._client.edit_story_caption(
             chat_id=self.chat.id,
             story_id=self.id,
             caption=caption,
@@ -1543,7 +1578,7 @@ class Story(Object, Update):
 
         .. code-block:: python
 
-            await client.edit_story(
+            await client.edit_story_privacy(
                 story_id=story.id,
                 privacy=enums.StoriesPrivacyRules.PUBLIC
             )
@@ -1557,13 +1592,13 @@ class Story(Object, Update):
             privacy (:obj:`~pyrogram.enums.StoriesPrivacyRules`, *optional*):
                 Story privacy.
 
-            allowed_users (List of ``int``, *optional*):
+            allowed_users (List of ``int`` | ``str``, *optional*):
                 List of user_id or chat_id of chat users who are allowed to view stories.
                 Note: chat_id available only with :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS`.
                 Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.CLOSE_FRIENDS`
                 and :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS` only
 
-            disallowed_users (List of ``int``, *optional*):
+            disallowed_users (List of ``int`` | ``str``, *optional*):
                 List of user_id whos disallow to view the stories.
                 Note: Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.PUBLIC`
                 and :obj:`~pyrogram.enums.StoriesPrivacyRules.CONTACTS` only
@@ -1574,7 +1609,7 @@ class Story(Object, Update):
         Raises:
             RPCError: In case of a Telegram RPC error.
         """
-        return await self._client.edit_story(
+        return await self._client.edit_story_privacy(
             chat_id=self.chat.id,
             story_id=self.id,
             privacy=privacy,
@@ -1673,7 +1708,8 @@ class Story(Object, Update):
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -1770,4 +1806,26 @@ class Story(Object, Update):
             block=block,
             progress=progress,
             progress_args=progress_args,
+        )
+
+    async def read(self) -> List[int]:
+        """Bound method *read* of :obj:`~pyrogram.types.Story`.
+
+        Example:
+            .. code-block:: python
+
+                await story.read()
+
+        Returns:
+            List of ``int``: On success, a list of read stories is returned.
+
+        Example:
+            .. code-block:: python
+
+                # Read stories
+                await app.read_stories(chat_id)
+        """
+        return await self._client.read_stories(
+            chat_id=self.chat.id,
+            max_id=self.id
         )

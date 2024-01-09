@@ -38,6 +38,8 @@ from .get_discussion_replies_count import GetDiscussionRepliesCount
 from .get_media_group import GetMediaGroup
 from .get_messages import GetMessages
 from .read_chat_history import ReadChatHistory
+from .read_mentions import ReadMentions
+from .read_reactions import ReadReactions
 from .retract_vote import RetractVote
 from .search_global import SearchGlobal
 from .search_global_count import SearchGlobalCount
@@ -61,11 +63,11 @@ from .send_venue import SendVenue
 from .send_video import SendVideo
 from .send_video_note import SendVideoNote
 from .send_voice import SendVoice
+from .send_web_page import SendWebPage
+from .start_bot import StartBot
 from .stop_poll import StopPoll
 from .stream_media import StreamMedia
 from .vote_poll import VotePoll
-from .wait_for_message import WaitForMessage
-from .wait_for_callback_query import WaitForCallbackQuery
 
 
 class Messages(
@@ -92,7 +94,9 @@ class Messages(
     SendVideoNote,
     SendVoice,
     SendPoll,
+    SendWebPage,
     VotePoll,
+    StartBot,
     StopPoll,
     RetractVote,
     DownloadMedia,
@@ -100,6 +104,8 @@ class Messages(
     SendCachedMedia,
     GetChatHistoryCount,
     ReadChatHistory,
+    ReadMentions,
+    ReadReactions,
     EditInlineText,
     EditInlineCaption,
     EditInlineMedia,
@@ -116,8 +122,6 @@ class Messages(
     GetDiscussionReplies,
     GetDiscussionRepliesCount,
     StreamMedia,
-    GetCustomEmojiStickers,
-    WaitForMessage,
-    WaitForCallbackQuery
+    GetCustomEmojiStickers
 ):
     pass

@@ -27,8 +27,8 @@ from pyrogram.errors import FilePartMissing
 class SendStory:
     async def send_story(
         self: "pyrogram.Client",
+        chat_id: Union[int, str],
         media: Union[str, BinaryIO],
-        chat_id: Union[int, str]="me",
         caption: str = None,
         period: int = None,
         duration: int = 0,
@@ -52,7 +52,7 @@ class SendStory:
 
         .. include:: /_includes/usable-by/users.rst
 
-        Note: You must pass one of following paramater *animation*, *photo*, *video*
+        Note: You must pass one of following parameters *animation*, *photo*, *video*
 
         Parameters:
             chat_id (``int`` | ``str``):
@@ -99,7 +99,7 @@ class SendStory:
                 and :obj:`~pyrogram.enums.StoriesPrivacyRules.SELECTED_USERS` only
 
             disallowed_users (List of ``int``, *optional*):
-                List of user_id whos disallow to view the stories.
+                List of user_id who are disallowed to view the stories.
                 Note: Works with :obj:`~pyrogram.enums.StoriesPrivacyRules.PUBLIC`
                 and :obj:`~pyrogram.enums.StoriesPrivacyRules.CONTACTS` only
 
@@ -135,8 +135,11 @@ class SendStory:
         Example:
             .. code-block:: python
 
-                # Send new story
-                await app.send_story(media=file_id, caption='Hello guys.')
+                # Post story to your profile
+                await app.send_story("me", "story.png", caption='My new story!')
+
+                # Post story to channel
+                await app.send_story(123456, "story.png", caption='My new story!')
 
         Raises:
             ValueError: In case of invalid arguments.
@@ -240,7 +243,7 @@ class SendStory:
                         peer = await self.resolve_peer(user)
                         if isinstance(peer, raw.types.InputPeerUser):
                             _allowed_users.append(peer)
-                        elif isinstance(peer, raw.types.InputPeerChat):
+                        elif isinstance(peer, (raw.types.InputPeerChat, raw.types.InputPeerChannel)):
                             _allowed_chats.append(peer)
 
                     if _allowed_users:

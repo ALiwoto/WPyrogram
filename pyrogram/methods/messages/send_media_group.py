@@ -46,11 +46,12 @@ class SendMediaGroup:
         disable_notification: bool = None,
         message_thread_id: int = None,
         reply_to_message_id: int = None,
-        reply_to_chat_id: int = None,
+        reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
         quote_text: str = None,
-        quote_entities: List["types.MessageEntity"] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
+        quote_entities: List["types.MessageEntity"] = None,
+        quote_offset: int = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
         invert_media: bool = None,
@@ -74,23 +75,29 @@ class SendMediaGroup:
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
-                for forum supergroups only.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
+            reply_to_chat_id (``int``, *optional*):
+                If the message is a reply, ID of the original chat.
+
             reply_to_story_id (``int``, *optional*):
                 Unique identifier for the target story.
 
-            quote_text (``str``):
+            quote_text (``str``, *optional*):
                 Text of the quote to be sent.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -99,7 +106,8 @@ class SendMediaGroup:
                 Protects the contents of the sent message from forwarding and saving.
 
             invert_media (``bool``, *optional*):
-                Invert media.
+                If True, link preview will be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
 
         Returns:
             List of :obj:`~pyrogram.types.Message`: On success, a list of the sent messages is returned.
@@ -162,7 +170,7 @@ class SendMediaGroup:
                             spoiler=i.has_spoiler
                         )
                     else:
-                        media = utils.get_input_media_from_file_id(i.media, FileType.PHOTO)
+                        media = utils.get_input_media_from_file_id(i.media, FileType.PHOTO, has_spoiler=i.has_spoiler)
                 else:
                     media = await self.invoke(
                         raw.functions.messages.UploadMedia(
@@ -234,7 +242,7 @@ class SendMediaGroup:
                             spoiler=i.has_spoiler
                         )
                     else:
-                        media = utils.get_input_media_from_file_id(i.media, FileType.VIDEO)
+                        media = utils.get_input_media_from_file_id(i.media, FileType.VIDEO, has_spoiler=i.has_spoiler)
                 else:
                     media = await self.invoke(
                         raw.functions.messages.UploadMedia(
@@ -418,8 +426,7 @@ class SendMediaGroup:
                 )
             )
 
-        if quote_text or quote_entities:
-            quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
+        quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
         peer = await self.resolve_peer(chat_id)
         r = await self.invoke(
@@ -434,6 +441,7 @@ class SendMediaGroup:
                     reply_to_story_id=reply_to_story_id,
                     quote_text=quote_text,
                     quote_entities=quote_entities,
+                    quote_offset=quote_offset,
                 ),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
