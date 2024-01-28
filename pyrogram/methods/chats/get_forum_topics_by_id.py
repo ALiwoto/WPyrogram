@@ -73,7 +73,7 @@ class GetForumTopicsByID:
 
         topics = types.List()
 
-        for i in r:
-            topics.append(types.ForumTopic._parse(i))
+        for current in getattr(r, "topics", []):
+            topics.append(types.ForumTopic._parse(current))
 
         return topics if is_iterable else topics[0]

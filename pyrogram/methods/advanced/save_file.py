@@ -145,7 +145,7 @@ class SaveFile:
             async with self.media_sessions_lock:
                 session = self.media_sessions.get(dc_id)
                 if not session:
-                    session = Session(
+                    session = self.media_sessions[dc_id] = Session(
                         self, dc_id, await self.storage.auth_key(),
                         await self.storage.test_mode(), is_media=True
                     )
