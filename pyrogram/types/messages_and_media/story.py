@@ -123,6 +123,9 @@ class Story(Object, Update):
         deleted (``bool``, *optional*):
             The story is deleted.
             A story can be deleted in case it was deleted or you tried to retrieve a story that doesn't exist yet.
+
+        raw (``pyrogram.raw.types.StoryItem``, *optional*):
+            The raw story object, as received from the Telegram API.
     """
 
     # TODO: Add Media Areas
@@ -160,7 +163,8 @@ class Story(Object, Update):
         disallowed_users: List[Union[int, str]] = None,
         reactions: List["types.Reaction"] = None,
         skipped: bool = None,
-        deleted: bool = None
+        deleted: bool = None,
+        raw: "raw.types.StoryItem" = None
     ):
         super().__init__(client)
 
@@ -194,6 +198,7 @@ class Story(Object, Update):
         self.reactions = reactions
         self.skipped = skipped
         self.deleted = deleted
+        self.raw = raw
 
     @staticmethod
     async def _parse(
@@ -340,8 +345,16 @@ class Story(Object, Update):
             allowed_users=allowed_users,
             disallowed_users=disallowed_users,
             reactions=reactions,
+            raw=story,
             client=client
         )
+
+    @property
+    def link(self) -> str:
+        if not self.chat.username:
+            return None
+
+        return f"https://t.me/{self.chat.username}/s/{self.id}"
 
     async def reply_text(
         self,
@@ -1023,6 +1036,7 @@ class Story(Object, Update):
         file_name: str = None,
         supports_streaming: bool = True,
         disable_notification: bool = None,
+        no_sound: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1100,6 +1114,10 @@ class Story(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
+            no_sound (``bool``, *optional*):
+                Pass True, if the uploaded video is a video message with no sound.
+                Doesn't work for external links.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -1149,6 +1167,7 @@ class Story(Object, Update):
             file_name=file_name,
             supports_streaming=supports_streaming,
             disable_notification=disable_notification,
+            no_sound=no_sound,
             reply_to_story_id=self.id,
             reply_markup=reply_markup,
             progress=progress,
@@ -1162,6 +1181,7 @@ class Story(Object, Update):
         length: int = 1,
         thumb: Union[str, BinaryIO] = None,
         disable_notification: bool = None,
+        view_once: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1211,6 +1231,10 @@ class Story(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
+            view_once (``bool``, *optional*):
+                Self-Destruct Timer.
+                If True, the video note will self-destruct after it was viewed.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -1253,6 +1277,7 @@ class Story(Object, Update):
             thumb=thumb,
             disable_notification=disable_notification,
             reply_to_story_id=self.id,
+            view_once=view_once,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -1266,6 +1291,7 @@ class Story(Object, Update):
         caption_entities: List["types.MessageEntity"] = None,
         duration: int = 0,
         disable_notification: bool = None,
+        view_once: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1316,6 +1342,10 @@ class Story(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
+            view_once (``bool``, *optional*):
+                Self-Destruct Timer.
+                If True, the voice note will self-destruct after it was listened.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -1359,6 +1389,7 @@ class Story(Object, Update):
             duration=duration,
             disable_notification=disable_notification,
             reply_to_story_id=self.id,
+            view_once=view_once,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -1617,31 +1648,6 @@ class Story(Object, Update):
             disallowed_users=disallowed_users,
         )
 
-    async def export_link(self) -> "types.ExportedStoryLink":
-        """Bound method *export_link* of :obj:`~pyrogram.types.Story`.
-
-        Use as a shortcut for:
-
-        .. code-block:: python
-
-            await client.export_story_link(
-                chat_id=self.chat.id,
-                story_id=story.id
-            )
-
-        Example:
-            .. code-block:: python
-
-                link = await story.export_link()
-
-        Returns:
-            ``str``: On success, a link to the story as string is returned.
-
-        Raises:
-            RPCError: In case of a Telegram RPC error.
-        """
-        return await self._client.export_story_link(chat_id=self.chat.id, story_id=self.id)
-
     async def react(self, emoji: Union[int, str] = None) -> bool:
         """Bound method *react* of :obj:`~pyrogram.types.Story`.
 
@@ -1800,7 +1806,7 @@ class Story(Object, Update):
             ``ValueError``: If the message doesn't contain any downloadable media
         """
         return await self._client.download_media(
-            message=getattr(self, self.media.value),
+            message=self,
             file_name=file_name,
             in_memory=in_memory,
             block=block,

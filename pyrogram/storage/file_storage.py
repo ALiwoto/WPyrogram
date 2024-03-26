@@ -25,7 +25,7 @@ from .sqlite_storage import SQLiteStorage
 
 log = logging.getLogger(__name__)
 
-SCHEMA = """
+USERNAMES_SCHEMA = """
 CREATE TABLE usernames
 (
     id       INTEGER,
@@ -34,6 +34,17 @@ CREATE TABLE usernames
 );
 
 CREATE INDEX idx_usernames_username ON usernames (username);
+"""
+
+UPDATE_STATE_SCHEMA = """
+CREATE TABLE update_state
+(
+    id   INTEGER PRIMARY KEY,
+    pts  INTEGER,
+    qts  INTEGER,
+    date INTEGER,
+    seq  INTEGER
+);
 """
 
 
@@ -62,7 +73,13 @@ class FileStorage(SQLiteStorage):
 
         if version == 3:
             with self.conn:
-                self.conn.executescript(SCHEMA)
+                self.conn.executescript(USERNAMES_SCHEMA)
+
+            version += 1
+
+        if version == 4:
+            with self.conn:
+                self.conn.executescript(UPDATE_STATE_SCHEMA)
 
             version += 1
 

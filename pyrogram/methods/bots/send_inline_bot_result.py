@@ -35,8 +35,9 @@ class SendInlineBotResult:
         reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
         quote_text: str = None,
+        parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
-        parse_mode: Optional["enums.ParseMode"] = None
+        quote_offset: int = None
     ) -> "raw.base.Updates":
         """Send an inline bot result.
         Bot results can be retrieved using :meth:`~pyrogram.Client.get_inline_bot_results`
@@ -61,20 +62,29 @@ class SendInlineBotResult:
 
             message_thread_id (``int``, *optional*):
                 Unique identifier of a message thread to which the message belongs.
-                for supergroups only
+                For supergroups only.
 
             reply_to_message_id (``bool``, *optional*):
                 If the message is a reply, ID of the original message.
 
-            quote_text (``str``):
+            reply_to_chat_id (``int``, *optional*):
+                If the message is a reply, ID of the original chat.
+            
+            reply_to_story_id (``int``, *optional*):
+                If the message is a reply to a story, ID of the story.
+
+            quote_text (``str``, *optional*):
                 Text of the quote to be sent.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
 
         Returns:
             :obj:`~pyrogram.raw.base.Updates`: Currently, on success, a raw result is returned.
@@ -100,7 +110,8 @@ class SendInlineBotResult:
                     message_thread_id=message_thread_id,
                     reply_to_story_id=reply_to_story_id,
                     quote_text=quote_text,
-                    quote_entities=quote_entities
+                    quote_entities=quote_entities,
+                    quote_offset=quote_offset,
                 )
             )
         )

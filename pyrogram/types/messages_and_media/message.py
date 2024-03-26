@@ -25,7 +25,7 @@ import pyrogram
 from pyrogram import raw, enums
 from pyrogram import types
 from pyrogram import utils
-from pyrogram.errors import MessageIdsEmpty, PeerIdInvalid, ChannelPrivate, BotMethodInvalid
+from pyrogram.errors import ChannelPrivate, MessageIdsEmpty, PeerIdInvalid, ChannelPrivate, BotMethodInvalid, ChannelForumMissing
 from pyrogram.parser import utils as parser_utils, Parser
 from ..object import Object
 from ..update import Update
@@ -37,22 +37,22 @@ class Str(str):
     def __init__(self, *args):
         super().__init__()
 
-        self.entities = None
+        self.entities: list = None
 
-    def init(self, entities):
+    def init(self, entities: list):
         self.entities = entities
 
         return self
 
     @property
-    def markdown(self):
+    def markdown(self) -> str:
         return Parser.unparse(self, self.entities, False)
 
     @property
-    def html(self):
+    def html(self) -> str:
         return Parser.unparse(self, self.entities, True)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> str:
         return parser_utils.remove_surrogates(parser_utils.add_surrogates(self)[item])
 
 
@@ -139,7 +139,7 @@ class Message(Object, Update):
             This field will contain the enumeration type of the media message.
             You can use ``media = getattr(message, message.media.value)`` to access the media message.
 
-        invert_media (``bool``, *optional*):
+        show_above_text (``bool``, *optional*):
             If True, link preview will be shown above the message text.
             Otherwise, the link preview will be shown below the message text.
 
@@ -300,6 +300,9 @@ class Message(Object, Update):
         forwards (``int``, *optional*):
             Channel post forwards.
 
+        sender_boost_count (``int``, *optional*):
+            The number of boosts applied by the sender.
+
         via_bot (:obj:`~pyrogram.types.User`):
             The information of the bot that generated the message from an inline query of a user.
 
@@ -357,8 +360,17 @@ class Message(Object, Update):
         gift_code (:obj:`~pyrogram.types.GiftCode`, *optional*):
             Service message: gift code information.
 
-        requested_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
+        requested_chats (:obj:`~pyrogram.types.RequestedChats`, *optional*):
             Service message: requested chats information.
+
+        giveaway_launched (``bool``, *optional*):
+            Service message: giveaway launched.
+
+        chat_ttl_period (``int``, *optional*):
+            Service message: chat TTL period changed.
+
+        boosts_applied (``int``, *optional*):
+            Service message: how many boosts were applied.
 
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
             Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -366,6 +378,9 @@ class Message(Object, Update):
 
         reactions (List of :obj:`~pyrogram.types.Reaction`):
             List of the reactions to this message.
+
+        raw (``pyrogram.raw.types.Message``, *optional*):
+            The raw message object, as received from the Telegram API.
 
         link (``str``, *property*):
             Generate a link to this message, only for groups and channels.
@@ -402,7 +417,7 @@ class Message(Object, Update):
         scheduled: bool = None,
         from_scheduled: bool = None,
         media: "enums.MessageMediaType" = None,
-        invert_media: bool = None,
+        show_above_text: bool = None,
         edit_date: datetime = None,
         edit_hidden: bool = None,
         media_group_id: int = None,
@@ -447,6 +462,7 @@ class Message(Object, Update):
         game_high_score: int = None,
         views: int = None,
         forwards: int = None,
+        sender_boost_count: int = None,
         via_bot: "types.User" = None,
         outgoing: bool = None,
         quote: bool = None,
@@ -464,15 +480,18 @@ class Message(Object, Update):
         video_chat_members_invited: "types.VideoChatMembersInvited" = None,
         web_app_data: "types.WebAppData" = None,
         gift_code: "types.GiftCode" = None,
-        requested_chats: List["types.Chat"] = None,
+        requested_chats: "types.RequestedChats" = None,
         giveaway_launched: bool = None,
+        chat_ttl_period: int = None,
+        boosts_applied: int = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
         ] = None,
-        reactions: List["types.Reaction"] = None
+        reactions: List["types.Reaction"] = None,
+        raw: "raw.types.Message" = None
     ):
         super().__init__(client)
 
@@ -501,7 +520,7 @@ class Message(Object, Update):
         self.scheduled = scheduled
         self.from_scheduled = from_scheduled
         self.media = media
-        self.invert_media = invert_media
+        self.show_above_text = show_above_text
         self.edit_date = edit_date
         self.edit_hidden = edit_hidden
         self.media_group_id = media_group_id
@@ -546,6 +565,7 @@ class Message(Object, Update):
         self.game_high_score = game_high_score
         self.views = views
         self.forwards = forwards
+        self.sender_boost_count = sender_boost_count
         self.via_bot = via_bot
         self.outgoing = outgoing
         self.quote = quote
@@ -566,7 +586,10 @@ class Message(Object, Update):
         self.gift_code = gift_code
         self.requested_chats = requested_chats
         self.giveaway_launched = giveaway_launched
+        self.chat_ttl_period = chat_ttl_period
+        self.boosts_applied = boosts_applied
         self.reactions = reactions
+        self.raw = raw
 
     @staticmethod
     async def _parse(
@@ -579,7 +602,7 @@ class Message(Object, Update):
         replies: int = 1
     ):
         if isinstance(message, raw.types.MessageEmpty):
-            return Message(id=message.id, empty=True, client=client)
+            return Message(id=message.id, empty=True, client=client, raw=message)
 
         from_id = utils.get_raw_peer_id(message.from_id)
         peer_id = utils.get_raw_peer_id(message.peer_id)
@@ -629,6 +652,8 @@ class Message(Object, Update):
             gift_code = None
             giveaway_launched = None
             requested_chats = None
+            chat_ttl_period = None
+            boosts_applied = None
 
             service_type = None
 
@@ -708,30 +733,14 @@ class Message(Object, Update):
                 gift_code = types.GiftCode._parse(client, action, chats)
                 service_type = enums.MessageServiceType.GIFT_CODE
             elif isinstance(action, raw.types.MessageActionRequestedPeer):
-                _requested_chats = []
-
-                for requested_peer in action.peers:
-                    chat_id = utils.get_peer_id(requested_peer)
-                    peer_type = utils.get_peer_type(chat_id)
-
-                    if peer_type == "user":
-                        chat_type = enums.ChatType.PRIVATE
-                    elif peer_type == "chat":
-                        chat_type = enums.ChatType.GROUP
-                    else:
-                        chat_type = enums.ChatType.CHANNEL
-
-                    _requested_chats.append(
-                        types.Chat(
-                            id=chat_id,
-                            type=chat_type,
-                            client=client
-                        )
-                    )
-
-                requested_chats = types.List(_requested_chats) or None
-
+                requested_chats = types.RequestedChats._parse(client, action)
                 service_type = enums.MessageServiceType.REQUESTED_CHAT
+            elif isinstance(action, raw.types.MessageActionSetMessagesTTL):
+                chat_ttl_period = action.period
+                service_type = enums.MessageServiceType.CHAT_TTL_CHANGED
+            elif isinstance(action, raw.types.MessageActionBoostApply):
+                boosts_applied = action.boosts
+                service_type = enums.MessageServiceType.BOOST_APPLY
 
             from_user = types.User._parse(client, users.get(user_id, None))
             sender_chat = types.Chat._parse(client, message, users, chats, is_chat=False) if not from_user else None
@@ -768,6 +777,9 @@ class Message(Object, Update):
                 giveaway_launched=giveaway_launched,
                 gift_code=gift_code,
                 requested_chats=requested_chats,
+                chat_ttl_period=chat_ttl_period,
+                boosts_applied=boosts_applied,
+                raw=message,
                 client=client
                 # TODO: supergroup_chat_created
             )
@@ -891,7 +903,7 @@ class Message(Object, Update):
                     else:
                         try:
                             story = await client.get_stories(utils.get_peer_id(media.peer), media.id)
-                        except BotMethodInvalid:
+                        except (BotMethodInvalid, ChannelPrivate):
                             story = await types.Story._parse(client, media, users, chats, media.peer)
 
                     media_type = enums.MessageMediaType.STORY
@@ -919,7 +931,7 @@ class Message(Object, Update):
                             video_attributes = attributes[raw.types.DocumentAttributeVideo]
 
                             if video_attributes.round_message:
-                                video_note = types.VideoNote._parse(client, doc, video_attributes)
+                                video_note = types.VideoNote._parse(client, doc, video_attributes, media.ttl_seconds)
                                 media_type = enums.MessageMediaType.VIDEO_NOTE
                             else:
                                 video = types.Video._parse(client, doc, video_attributes, file_name, media.ttl_seconds)
@@ -929,7 +941,7 @@ class Message(Object, Update):
                             audio_attributes = attributes[raw.types.DocumentAttributeAudio]
 
                             if audio_attributes.voice:
-                                voice = types.Voice._parse(client, doc, audio_attributes)
+                                voice = types.Voice._parse(client, doc, audio_attributes, media.ttl_seconds)
                                 media_type = enums.MessageMediaType.VOICE
                             else:
                                 audio = types.Audio._parse(client, doc, audio_attributes, file_name)
@@ -1018,7 +1030,7 @@ class Message(Object, Update):
                 scheduled=is_scheduled,
                 from_scheduled=message.from_scheduled,
                 media=media_type,
-                invert_media=getattr(message, "invert_media", None),
+                show_above_text=getattr(message, "invert_media", None),
                 edit_date=utils.timestamp_to_datetime(message.edit_date),
                 edit_hidden=message.edit_hide,
                 media_group_id=message.grouped_id,
@@ -1042,10 +1054,12 @@ class Message(Object, Update):
                 dice=dice,
                 views=message.views,
                 forwards=message.forwards,
+                sender_boost_count=getattr(message, "from_boosts_applied", None),
                 via_bot=types.User._parse(client, users.get(message.via_bot_id, None)),
                 outgoing=message.out,
                 reply_markup=reply_markup,
                 reactions=reactions,
+                raw=message,
                 client=client
             )
 
@@ -1084,9 +1098,9 @@ class Message(Object, Update):
 
                         parsed_message.reply_to_message_id = message.reply_to.reply_to_msg_id
                         parsed_message.reply_to_top_message_id = message.reply_to.reply_to_top_id
-                else:
+                elif isinstance(message.reply_to, raw.types.MessageReplyStoryHeader):
                     parsed_message.reply_to_story_id = message.reply_to.story_id
-                    parsed_message.reply_to_story_user_id = message.reply_to.user_id
+                    parsed_message.reply_to_story_user_id = utils.get_peer_id(message.reply_to.peer)
 
                 if replies:
                     if parsed_message.reply_to_message_id:
@@ -1112,6 +1126,8 @@ class Message(Object, Update):
                                     pass
                             if reply_to_message and not reply_to_message.forum_topic_created:
                                 parsed_message.reply_to_message = reply_to_message
+                        except ChannelPrivate:
+                            pass
                         except MessageIdsEmpty:
                             pass
                     elif parsed_message.reply_to_story_id:
@@ -1131,7 +1147,7 @@ class Message(Object, Update):
                         chat_id=parsed_message.chat.id,
                         topic_ids=parsed_message.message_thread_id or 1
                     )
-                except BotMethodInvalid:
+                except (BotMethodInvalid, ChannelForumMissing):
                     pass
 
             if not parsed_message.poll:  # Do not cache poll messages
@@ -1195,7 +1211,7 @@ class Message(Object, Update):
         disable_web_page_preview: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
-        invert_media: bool = None,
+        show_above_text: bool = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
@@ -1249,7 +1265,7 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
-            invert_media (``bool``, *optional*):
+            show_above_text (``bool``, *optional*):
                 If True, link preview will be shown above the message text.
                 Otherwise, the link preview will be shown below the message text.
 
@@ -1295,7 +1311,7 @@ class Message(Object, Update):
             disable_web_page_preview=disable_web_page_preview,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
-            invert_media=invert_media,
+            show_above_text=show_above_text,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
@@ -1895,6 +1911,7 @@ class Message(Object, Update):
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
         schedule_date: datetime = None,
+        protect_content: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1981,6 +1998,9 @@ class Message(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -2039,6 +2059,7 @@ class Message(Object, Update):
             quote_text=quote_text,
             quote_entities=quote_entities,
             schedule_date=schedule_date,
+            protect_content=protect_content,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -2975,6 +2996,7 @@ class Message(Object, Update):
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        no_sound: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3065,6 +3087,10 @@ class Message(Object, Update):
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
 
+            no_sound (``bool``, *optional*):
+                Pass True, if the uploaded video is a video message with no sound.
+                Doesn't work for external links.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -3126,6 +3152,7 @@ class Message(Object, Update):
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            no_sound=no_sound,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -3144,6 +3171,8 @@ class Message(Object, Update):
         quote_text: str = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
+        protect_content: bool = None,
+        view_once: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3214,6 +3243,13 @@ class Message(Object, Update):
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
 
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            view_once (``bool``, *optional*):
+                Self-Destruct Timer.
+                If True, the video note will self-destruct after it was viewed.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -3269,6 +3305,8 @@ class Message(Object, Update):
             quote_text=quote_text,
             parse_mode=parse_mode,
             quote_entities=quote_entities,
+            protect_content=protect_content,
+            view_once=view_once,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -3287,7 +3325,7 @@ class Message(Object, Update):
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
-        ttl_seconds: int = None,
+        view_once: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3355,10 +3393,9 @@ class Message(Object, Update):
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
 
-            ttl_seconds (``int``, *optional*):
+            view_once (``bool``, *optional*):
                 Self-Destruct Timer.
-                If you set a timer, the voice note will self-destruct in *ttl_seconds*
-                seconds after it was listened.
+                If True, the voice note will self-destruct after it was listened.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3415,10 +3452,140 @@ class Message(Object, Update):
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
-            ttl_seconds=ttl_seconds,
+            view_once=view_once,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
+        )
+
+    async def reply_web_page(
+        self,
+        text: str = None,
+        url: str = None,
+        prefer_large_media: bool = None,
+        prefer_small_media: bool = None,
+        parse_mode: Optional["enums.ParseMode"] = None,
+        entities: List["types.MessageEntity"] = None,
+        disable_notification: bool = None,
+        message_thread_id: int = None,
+        show_above_text: bool = None,
+        reply_to_message_id: int = None,
+        reply_to_chat_id: Union[int, str] = None,
+        reply_to_story_id: int = None,
+        quote_text: str = None,
+        quote_entities: List["types.MessageEntity"] = None,
+        quote_offset: int = None,
+        schedule_date: datetime = None,
+        protect_content: bool = None,
+        reply_markup: Union[
+            "types.InlineKeyboardMarkup",
+            "types.ReplyKeyboardMarkup",
+            "types.ReplyKeyboardRemove",
+            "types.ForceReply"
+        ] = None
+    ) -> "types.Message":
+        """Bound method *reply_web_page* of :obj:`~pyrogram.types.Message`.
+
+        Use as a shortcut for:
+
+        .. code-block:: python
+
+            await client.send_web_page(
+                chat_id=message.chat.id,
+                url="https://docs.pyrogram.org"
+            )
+
+        Example:
+            .. code-block:: python
+
+                await message.reply_web_page("https://docs.pyrogram.org")
+
+        Parameters:
+            text (``str``, *optional*):
+                Text of the message to be sent.
+
+            url (``str``, *optional*):
+                Link that will be previewed.
+                If url not specified, the first URL found in the text will be used.
+
+            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles.
+                You can combine both syntaxes together.
+
+            entities (List of :obj:`~pyrogram.types.MessageEntity`):
+                List of special entities that appear in message text, which can be specified instead of *parse_mode*.
+
+            prefer_large_media (``bool``, *optional*):
+                If True, media in the link preview will be larger.
+                Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
+
+            prefer_small_media (``bool``, *optional*):
+                If True, media in the link preview will be smaller.
+                Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
+
+            show_above_text (``bool``, *optional*):
+                If True, link preview will be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
+
+            disable_notification (``bool``, *optional*):
+                Sends the message silently.
+                Users will receive a notification with no sound.
+
+            message_thread_id (``int``, *optional*):
+                Unique identifier for the target message thread (topic) of the forum.
+                for forum supergroups only.
+
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message.
+
+            reply_to_chat_id (``int`` | ``str``, *optional*):
+                If the message is a reply, ID of the original chat.
+
+            reply_to_story_id (``int``, *optional*):
+                Unique identifier for the target story.
+
+            quote_text (``str``, *optional*):
+                Text of the quote to be sent.
+
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
+
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
+                Additional interface options. An object for an inline keyboard, custom reply keyboard,
+                instructions to remove reply keyboard or to force a reply from the user.
+
+        Returns:
+            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+        """
+        return await self._client.send_web_page(
+            chat_id=self.chat.id,
+            text=text,
+            url=url,
+            prefer_large_media=prefer_large_media,
+            prefer_small_media=prefer_small_media,
+            parse_mode=parse_mode,
+            entities=entities,
+            disable_notification=disable_notification,
+            message_thread_id=message_thread_id,
+            show_above_text=show_above_text,
+            reply_to_message_id=reply_to_message_id,
+            reply_to_chat_id=reply_to_chat_id,
+            reply_to_story_id=reply_to_story_id,
+            quote_text=quote_text,
+            quote_entities=quote_entities,
+            quote_offset=quote_offset,
+            schedule_date=schedule_date,
+            protect_content=protect_content,
+            reply_markup=reply_markup
         )
 
     async def edit_text(
@@ -3427,6 +3594,7 @@ class Message(Object, Update):
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
+        show_above_text: bool = None,
         reply_markup: "types.InlineKeyboardMarkup" = None
     ) -> "Message":
         """Bound method *edit_text* of :obj:`~pyrogram.types.Message`.
@@ -3462,6 +3630,10 @@ class Message(Object, Update):
             disable_web_page_preview (``bool``, *optional*):
                 Disables link previews for links in this message.
 
+            show_above_text (``bool``, *optional*):
+                If True, link preview will be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
@@ -3478,6 +3650,7 @@ class Message(Object, Update):
             parse_mode=parse_mode,
             entities=entities,
             disable_web_page_preview=disable_web_page_preview,
+            show_above_text=show_above_text,
             reply_markup=reply_markup
         )
 
@@ -3618,6 +3791,8 @@ class Message(Object, Update):
         chat_id: Union[int, str],
         message_thread_id: int = None,
         disable_notification: bool = None,
+        hide_sender_name: bool = None,
+        hide_captions: bool = None,
         schedule_date: datetime = None
     ) -> Union["types.Message", List["types.Message"]]:
         """Bound method *forward* of :obj:`~pyrogram.types.Message`.
@@ -3654,6 +3829,12 @@ class Message(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
+            hide_sender_name (``bool``, *optional*):
+                If True, the original author of the message will not be shown.
+
+            hide_captions (``bool``, *optional*):
+                If True, the original media captions will be removed.
+
         Returns:
             On success, the forwarded Message is returned.
 
@@ -3666,7 +3847,9 @@ class Message(Object, Update):
             message_ids=self.id,
             message_thread_id=message_thread_id,
             disable_notification=disable_notification,
-            schedule_date=schedule_date
+            schedule_date=schedule_date,
+            hide_sender_name=hide_sender_name,
+            hide_captions=hide_captions
         )
 
     async def copy(

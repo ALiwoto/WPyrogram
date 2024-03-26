@@ -25,8 +25,7 @@ from pyrogram import raw
 class BlockUser:
     async def block_user(
         self: "pyrogram.Client",
-        user_id: Union[int, str],
-        my_stories_from: Union[bool, None] = None
+        user_id: Union[int, str]
     ) -> bool:
         """Block a user.
 
@@ -49,8 +48,7 @@ class BlockUser:
         return bool(
             await self.invoke(
                 raw.functions.contacts.Block(
-                    id=await self.resolve_peer(user_id),
-                    my_stories_from=my_stories_from
+                    id=await self.resolve_peer(user_id)
                 )
             )
         )

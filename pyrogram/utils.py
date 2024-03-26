@@ -25,6 +25,7 @@ import struct
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timezone
 from getpass import getpass
+import re
 from typing import Union, List, Dict, Optional
 
 import pyrogram
@@ -331,7 +332,7 @@ def get_reply_to(
 ) -> Optional[Union[raw.types.InputReplyToMessage, raw.types.InputReplyToStory]]:
     """Get InputReply for reply_to argument"""
     if all((reply_to_peer, reply_to_story_id)):
-        return raw.types.InputReplyToStory(user_id=reply_to_peer, story_id=reply_to_story_id)  # type: ignore[arg-type]
+        return raw.types.InputReplyToStory(peer=reply_to_peer, story_id=reply_to_story_id)  # type: ignore[arg-type]
 
     if any((reply_to_message_id, message_thread_id)):
         return raw.types.InputReplyToMessage(
@@ -472,3 +473,12 @@ def timestamp_to_datetime(ts: Optional[int]) -> Optional[datetime]:
 
 def datetime_to_timestamp(dt: Optional[datetime]) -> Optional[int]:
     return int(dt.timestamp()) if dt else None
+
+
+def get_first_url(text):
+    text = re.sub(r"^\s*(<[\w<>=\s\"]*>)\s*", r"\1", text)
+    text = re.sub(r"\s*(</[\w</>]*>)\s*$", r"\1", text)
+
+    matches = re.findall(r"(https?):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])", text)
+
+    return f"{matches[0][0]}://{matches[0][1]}{matches[0][2]}" if matches else None

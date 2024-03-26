@@ -27,15 +27,15 @@ class SendWebPage:
     async def send_web_page(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        url: str,
         text: str = None,
-        force_large_media: bool = None,
-        force_small_media: bool = None,
+        url: str = None,
+        prefer_large_media: bool = None,
+        prefer_small_media: bool = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
-        invert_media: bool = None,
+        show_above_text: bool = None,
         reply_to_message_id: int = None,
         reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
@@ -51,7 +51,7 @@ class SendWebPage:
             "types.ForceReply"
         ] = None
     ) -> "types.Message":
-        """Send text Web Page Preview.
+        """Send Web Page Preview.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -61,11 +61,12 @@ class SendWebPage:
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            url (``str``):
-                Link that will be previewed.
-
             text (``str``, *optional*):
                 Text of the message to be sent.
+
+            url (``str``, *optional*):
+                Link that will be previewed.
+                If url not specified, the first URL found in the text will be used.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
@@ -74,15 +75,15 @@ class SendWebPage:
             entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
-            force_large_media (``bool``, *optional*):
+            prefer_large_media (``bool``, *optional*):
                 If True, media in the link preview will be larger.
                 Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
 
-            force_small_media (``bool``, *optional*):
+            prefer_small_media (``bool``, *optional*):
                 If True, media in the link preview will be smaller.
                 Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
 
-            invert_media (``bool``, *optional*):
+            show_above_text (``bool``, *optional*):
                 If True, link preview will be shown above the message text.
                 Otherwise, the link preview will be shown below the message text.
 
@@ -123,7 +124,7 @@ class SendWebPage:
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent text message is returned.
+            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
 
         Example:
             .. code-block:: python
@@ -132,13 +133,26 @@ class SendWebPage:
                 await app.send_web_page("me", "https://docs.pyrogram.org")
 
                 # Make web preview image larger
-                await app.send_web_page("me", "https://docs.pyrogram.org", force_large_media=True)
+                await app.send_web_page("me", "https://docs.pyrogram.org", prefer_large_media=True)
 
         """
 
         message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
         quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
+
+        if not url:
+            if entities:
+                for entity in entities:
+                    if isinstance(entity, enums.MessageEntityType.URL):
+                        url = entity.url
+                        break
+
+            if not url:
+                url = utils.get_first_url(message)
+
+        if not url:
+            raise ValueError("URL not specified")
 
         r = await self.invoke(
             raw.functions.messages.SendMedia(
@@ -159,10 +173,10 @@ class SendWebPage:
                 message=message,
                 media=raw.types.InputMediaWebPage(
                     url=url,
-                    force_large_media=force_large_media,
-                    force_small_media=force_small_media
+                    force_large_media=prefer_large_media,
+                    force_small_media=prefer_small_media
                 ),
-                invert_media=invert_media,
+                invert_media=show_above_text,
                 entities=entities,
                 noforwards=protect_content
             )

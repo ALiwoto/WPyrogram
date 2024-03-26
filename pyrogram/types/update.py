@@ -20,10 +20,8 @@ import pyrogram
 
 
 class Update:
-    @staticmethod
-    def stop_propagation():
+    def stop_propagation(self):
         raise pyrogram.StopPropagation
 
-    @staticmethod
-    def continue_propagation():
+    def continue_propagation(self):
         raise pyrogram.ContinuePropagation

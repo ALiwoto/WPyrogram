@@ -54,6 +54,15 @@ CREATE TABLE usernames
     FOREIGN KEY (id) REFERENCES peers(id)
 );
 
+CREATE TABLE update_state
+(
+    id   INTEGER PRIMARY KEY,
+    pts  INTEGER,
+    qts  INTEGER,
+    date INTEGER,
+    seq  INTEGER
+);
+
 CREATE TABLE version
 (
     number INTEGER PRIMARY KEY
@@ -96,7 +105,7 @@ def get_input_peer(peer_id: int, access_hash: int, peer_type: str):
 
 
 class SQLiteStorage(Storage):
-    VERSION = 4
+    VERSION = 5
     USERNAME_TTL = 8 * 60 * 60
 
     def __init__(self, name: str):
@@ -132,24 +141,49 @@ class SQLiteStorage(Storage):
         raise NotImplementedError
 
     async def update_peers(self, peers: List[Tuple[int, int, str, List[str], str]]):
-        for peer_data in peers:
-            id, access_hash, type, usernames, phone_number = peer_data
+        peers_data = []
+        usernames_data = []
+        ids_to_delete = []
 
-            self.conn.execute(
-                "REPLACE INTO peers (id, access_hash, type, phone_number)"
-                "VALUES (?, ?, ?, ?)",
-                (id, access_hash, type, phone_number)
-            )
+        for id, access_hash, type, usernames, phone_number in peers:
+            ids_to_delete.append((id,))
+            peers_data.append((id, access_hash, type, phone_number))
 
-            self.conn.execute(
-                "DELETE FROM usernames WHERE id = ?",
-                (id,)
-            )
+            if usernames:
+                usernames_data.extend([(id, username) for username in usernames])
 
+        self.conn.executemany(
+            "REPLACE INTO peers (id, access_hash, type, phone_number) VALUES (?, ?, ?, ?)",
+            peers_data)
+
+        self.conn.executemany(
+            "DELETE FROM usernames WHERE id = ?",
+            ids_to_delete)
+
+        if usernames_data:
             self.conn.executemany(
                 "REPLACE INTO usernames (id, username) VALUES (?, ?)",
-                [(id, username) for username in usernames] if usernames else [(id, None)]
-            )
+                usernames_data)
+
+    async def update_state(self, value: Tuple[int, int, int, int, int] = object):
+        if value == object:
+            return self.conn.execute(
+                "SELECT id, pts, qts, date, seq FROM update_state "
+                "ORDER BY date ASC"
+            ).fetchall()
+        else:
+            with self.conn:
+                if isinstance(value, int):
+                    self.conn.execute(
+                        "DELETE FROM update_state WHERE id = ?",
+                        (value,)
+                    )
+                else:
+                    self.conn.execute(
+                        "REPLACE INTO update_state (id, pts, qts, date, seq)"
+                        "VALUES (?, ?, ?, ?, ?)",
+                        value
+                    )
 
     async def get_peer_by_id(self, peer_id: int):
         r = self.conn.execute(

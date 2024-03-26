@@ -230,11 +230,11 @@ text = create(text_filter)
 
 # region reply_filter
 async def reply_filter(_, __, m: Message):
-    return bool(m.reply_to_message_id)
+    return bool(m.reply_to_message_id or m.reply_to_story_id)
 
 
 reply = create(reply_filter)
-"""Filter messages that are replies to other messages."""
+"""Filter messages that are replies to other messages or stories."""
 
 
 # endregion
@@ -505,9 +505,8 @@ media_spoiler = create(media_spoiler_filter)
 # endregion
 
 # region private_filter
-async def private_filter(_, __, u: Update):
-    m = u.message if isinstance(u, CallbackQuery) else u
-    return bool(m and m.chat and m.chat.type in {enums.ChatType.PRIVATE, enums.ChatType.BOT})
+async def private_filter(_, __, m: Message):
+    return bool(m.chat and m.chat.type in {enums.ChatType.PRIVATE, enums.ChatType.BOT})
 
 
 private = create(private_filter)
@@ -517,9 +516,8 @@ private = create(private_filter)
 # endregion
 
 # region group_filter
-async def group_filter(_, __, u: Update):
-    m = u.message if isinstance(u, CallbackQuery) else u
-    return bool(m and m.chat and m.chat.type in {enums.ChatType.GROUP, enums.ChatType.SUPERGROUP})
+async def group_filter(_, __, m: Message):
+    return bool(m.chat and m.chat.type in {enums.ChatType.GROUP, enums.ChatType.SUPERGROUP})
 
 
 group = create(group_filter)
@@ -529,9 +527,8 @@ group = create(group_filter)
 # endregion
 
 # region channel_filter
-async def channel_filter(_, __, u: Update):
-    m = u.message if isinstance(u, CallbackQuery) else u
-    return bool(m and m.chat and m.chat.type == enums.ChatType.CHANNEL)
+async def channel_filter(_, __, m: Message):
+    return bool(m.chat and m.chat.type == enums.ChatType.CHANNEL)
 
 
 channel = create(channel_filter)

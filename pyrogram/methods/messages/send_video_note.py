@@ -49,6 +49,7 @@ class SendVideoNote:
         quote_offset: int = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
+        view_once: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -123,6 +124,10 @@ class SendVideoNote:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            view_once (``bool``, *optional*):
+                Self-Destruct Timer.
+                If True, the video note will self-destruct after it was viewed.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -162,6 +167,9 @@ class SendVideoNote:
 
                 # Set video note length
                 await app.send_video_note("me", "video_note.mp4", length=25)
+
+                # Send self-destructing video note
+                await app.send_video_note("me", "video_note.mp4", view_once=True)
         """
         file = None
 
@@ -181,7 +189,8 @@ class SendVideoNote:
                                 w=length,
                                 h=length
                             )
-                        ]
+                        ],
+                        ttl_seconds=(1 << 31) - 1 if view_once else None
                     )
                 else:
                     media = utils.get_input_media_from_file_id(video_note, FileType.VIDEO_NOTE)
@@ -199,7 +208,8 @@ class SendVideoNote:
                             w=length,
                             h=length
                         )
-                    ]
+                    ],
+                    ttl_seconds=(1 << 31) - 1 if view_once else None
                 )
 
             quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()

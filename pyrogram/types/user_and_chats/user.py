@@ -100,6 +100,9 @@ class User(Object, Update):
         is_premium (``bool``, *optional*):
             True, if this user is a premium user.
 
+        is_contact_require_premium (``bool``, *optional*):
+            True, if this user requires premium to send messages to him.
+
         is_close_friend (``bool``, *optional*):
             True, if this user is a close friend.
 
@@ -155,9 +158,6 @@ class User(Object, Update):
             The list of reasons why this bot might be unavailable to some users.
             This field is available only in case *is_restricted* is True.
 
-        full_name (``str``, *optional*):
-            User's or bot's full name.
-
         mention (``str``, *property*):
             Generate a text mention for this user.
             You can use ``user.mention()`` to mention the user using their first name (styled using html), or
@@ -187,6 +187,7 @@ class User(Object, Update):
         is_fake: bool = None,
         is_support: bool = None,
         is_premium: bool = None,
+        is_contact_require_premium: bool = None,
         is_close_friend: bool = None,
         is_stories_hidden: bool = None,
         is_stories_unavailable: bool = None,
@@ -220,6 +221,7 @@ class User(Object, Update):
         self.is_fake = is_fake
         self.is_support = is_support
         self.is_premium = is_premium
+        self.is_contact_require_premium = is_contact_require_premium
         self.is_close_friend = is_close_friend
         self.is_stories_hidden = is_stories_hidden
         self.is_stories_unavailable = is_stories_unavailable
@@ -269,6 +271,7 @@ class User(Object, Update):
             is_fake=user.fake,
             is_support=user.support,
             is_premium=user.premium,
+            is_contact_require_premium=user.contact_require_premium,
             is_close_friend=user.close_friend,
             is_stories_hidden=user.stories_hidden,
             is_stories_unavailable=user.stories_unavailable,

@@ -218,8 +218,13 @@ class SendStory:
                         privacy_rules = [raw.types.InputPrivacyValueAllowCloseFriends()]
                     elif privacy == "contacts":
                         privacy_rules = [raw.types.InputPrivacyValueAllowContacts()]
-                    elif privacy == "all":
+                    elif privacy == "all" or privacy == "everyone":
                         privacy_rules = [raw.types.InputPrivacyValueAllowAll()]
+                    else:
+                        # It's just better to raise an exception here than to risk user-privacy...
+                        # maybe the user have made a typo and wrote "friends" wrongly? that's why
+                        # we will be raising an exception here so they can fix it on next try.
+                        raise ValueError(f"invalid privacy (str) parameter passed: {privacy}")
                 elif privacy == enums.StoriesPrivacyRules.PUBLIC:
                     privacy_rules.append(raw.types.InputPrivacyValueAllowAll())
                     if disallowed_users:

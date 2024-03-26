@@ -88,8 +88,16 @@ class Client(Methods):
             Operating System version.
             Defaults to *platform.system() + " " + platform.release()*.
 
+        lang_pack (``str``, *optional*):
+            Name of the language pack used on the client.
+            Defaults to "" (empty string).
+
         lang_code (``str``, *optional*):
             Code of the language used on the client, in ISO 639-1 standard.
+            Defaults to "en".
+
+        system_lang_code (``str``, *optional*):
+            Code of the language used on the system, in ISO 639-1 standard.
             Defaults to "en".
 
         ipv6 (``bool``, *optional*):
@@ -155,6 +163,17 @@ class Client(Methods):
             Useful for batch programs that don't need to deal with updates.
             Defaults to False (updates enabled and received).
 
+        skip_updates (``bool``, *optional*):
+            Pass True to skip pending updates that arrived while the client was offline.
+            Defaults to True.
+        
+        allow_states_update (``bool``, *optional*):
+            Pass True to allow updating states in the db; please consider this might have
+            a performance impact; since we will be sending query to the database a lot,
+            consider disabling this option if you do not want to fetch updates in your bot's
+            offline time.
+            Defaults to True.
+
         takeout (``bool``, *optional*):
             Pass True to let the client use a takeout session instead of a normal one, implies *no_updates=True*.
             Useful for exporting Telegram data. Methods invoked inside a takeout session (such as get_chat_history,
@@ -173,21 +192,31 @@ class Client(Methods):
             Defaults to False, because ``getpass`` (the library used) is known to be problematic in some
             terminal environments.
 
-        max_concurrent_transmissions (``bool``, *optional*):
+        max_concurrent_transmissions (``int``, *optional*):
             Set the maximum amount of concurrent transmissions (uploads & downloads).
             A value that is too high may result in network related issues.
             Defaults to 1.
 
+        max_message_cache_size (``int``, *optional*):
+            Set the maximum size of the message cache.
+            Defaults to 10000.
+
         storage_engine (:obj:`~pyrogram.storage.Storage`, *optional*):
             Pass an instance of your own implementation of session storage engine.
             Useful when you want to store your session in databases like Mongo, Redis, etc.
+
+        init_connection_params (:obj:`~pyrogram.raw.base.JSONValue`, *optional*):
+            Additional initConnection parameters.
+            For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
     """
 
     APP_VERSION = f"Pyrogram {__version__}"
     DEVICE_MODEL = f"{platform.python_implementation()} {platform.python_version()}"
     SYSTEM_VERSION = f"{platform.system()} {platform.release()}"
 
+    LANG_PACK = ""
     LANG_CODE = "en"
+    SYSTEM_LANG_CODE = "en"
 
     PARENT_DIR = Path(sys.argv[0]).parent
 
@@ -196,9 +225,10 @@ class Client(Methods):
     WORKDIR = PARENT_DIR
 
     # Interval of seconds in which the updates watchdog will kick in
-    UPDATES_WATCHDOG_INTERVAL = 5 * 60
+    UPDATES_WATCHDOG_INTERVAL = 15 * 60
 
     MAX_CONCURRENT_TRANSMISSIONS = 1
+    MAX_MESSAGE_CACHE_SIZE = 10000
 
     mimetypes = MimeTypes()
     mimetypes.readfp(StringIO(mime_types))
@@ -211,7 +241,9 @@ class Client(Methods):
         app_version: str = APP_VERSION,
         device_model: str = DEVICE_MODEL,
         system_version: str = SYSTEM_VERSION,
+        lang_pack: str = LANG_PACK,
         lang_code: str = LANG_CODE,
+        system_lang_code: str = SYSTEM_LANG_CODE,
         ipv6: bool = False,
         proxy: dict = None,
         test_mode: bool = False,
@@ -226,11 +258,15 @@ class Client(Methods):
         plugins: dict = None,
         parse_mode: "enums.ParseMode" = enums.ParseMode.DEFAULT,
         no_updates: bool = None,
+        skip_updates: bool = True,
+        allow_states_update: bool = True,
         takeout: bool = None,
         sleep_threshold: int = Session.SLEEP_THRESHOLD,
         hide_password: bool = False,
         max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS,
-        storage_engine: Storage = None
+        max_message_cache_size: int = MAX_MESSAGE_CACHE_SIZE,
+        storage_engine: Storage = None,
+        init_connection_params: "raw.base.JSONValue" = None
     ):
         super().__init__()
 
@@ -240,7 +276,9 @@ class Client(Methods):
         self.app_version = app_version
         self.device_model = device_model
         self.system_version = system_version
+        self.lang_pack = lang_pack.lower()
         self.lang_code = lang_code.lower()
+        self.system_lang_code = system_lang_code.lower()
         self.ipv6 = ipv6
         self.proxy = proxy
         self.test_mode = test_mode
@@ -255,10 +293,14 @@ class Client(Methods):
         self.plugins = plugins
         self.parse_mode = parse_mode
         self.no_updates = no_updates
+        self.skip_updates = skip_updates
+        self.allow_states_update = allow_states_update
         self.takeout = takeout
         self.sleep_threshold = sleep_threshold
         self.hide_password = hide_password
         self.max_concurrent_transmissions = max_concurrent_transmissions
+        self.max_message_cache_size = max_message_cache_size
+        self.init_connection_params = init_connection_params
 
         self.executor = ThreadPoolExecutor(self.workers, thread_name_prefix="Handler")
 
@@ -294,7 +336,7 @@ class Client(Methods):
 
         self.me: Optional[User] = None
 
-        self.message_cache = Cache(10000)
+        self.message_cache = Cache(self.max_message_cache_size)
 
         # Sometimes, for some reason, the server will stop sending updates and will only respond to pings.
         # This watchdog will invoke updates.GetState in order to wake up the server and enable it sending updates again
@@ -695,6 +737,17 @@ class Client(Methods):
                 pts = getattr(update, "pts", None)
                 pts_count = getattr(update, "pts_count", None)
 
+                if pts and self.allow_states_update:
+                    await self.storage.update_state(
+                        (
+                            utils.get_channel_id(channel_id) if channel_id else 0,
+                            pts,
+                            None,
+                            updates.date,
+                            updates.seq
+                        )
+                    )
+
                 if isinstance(update, raw.types.UpdateChannelTooLong):
                     log.info(update)
 
@@ -725,6 +778,17 @@ class Client(Methods):
 
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
+            if self.allow_states_update:
+                await self.storage.update_state(
+                    (
+                        0,
+                        updates.pts,
+                        None,
+                        updates.date,
+                        None
+                    )
+                )
+
             diff = await self.invoke(
                 raw.functions.updates.GetDifference(
                     pts=updates.pts - updates.pts_count,
@@ -932,6 +996,9 @@ class Client(Methods):
                 os.remove(temp_file_path)
 
             if isinstance(e, asyncio.CancelledError):
+                raise e
+
+            if isinstance(e, pyrogram.errors.FloodWait):
                 raise e
 
             return None
@@ -1165,14 +1232,10 @@ class Client(Methods):
                         await cdn_session.stop()
             except pyrogram.StopTransmission:
                 raise
+            except pyrogram.errors.FloodWait:
+                raise
             except Exception as e:
                 log.exception(e)
-            finally:
-                if session:
-                    try:
-                        await session.stop()
-                        self.media_sessions.pop(session.dc_id)
-                    except: pass
 
     def guess_mime_type(self, filename: str) -> Optional[str]:
         return self.mimetypes.guess_type(filename)[0]
