@@ -1,6 +1,18 @@
 
 # Extra repositories that we have merged commits from:
 
+
+## [KurimuzonAkuma/pyrogram](https://github.com/KurimuzonAkuma/pyrogram)
+  - [Update API schema to Layer 176](https://github.com/KurimuzonAkuma/pyrogram/commit/351fda3208ea153a2ddc34e5c2518c4ca5161ce9)
+  - [Fix get_folders](https://github.com/KurimuzonAkuma/pyrogram/commit/6f99be7ae62fded51832bc24186a8939770c6ced)
+  - [Refactor sqlite storage](https://github.com/KurimuzonAkuma/pyrogram/commit/221f25dab05b756d013cc7ef5543daa93ada06c8)
+  - [Add no_sound parameter to send_video methods](https://github.com/KurimuzonAkuma/pyrogram/commit/0bf78fab5a3982ffb535d91c907318a7f2d9a377)
+  - [Add new get_stickers method](https://github.com/KurimuzonAkuma/pyrogram/commit/c5d60287790b65db3dff312da2abfd96e3d1b615)
+  - [Add sender_boost_count attribute to Message class](https://github.com/KurimuzonAkuma/pyrogram/commit/812c3979fc77503eb18d28a9ebcd27aeeca91869)
+  - [Add typehints to all of the decorators classes](https://github.com/KurimuzonAkuma/pyrogram/commit/9b1524dd8162264d6d322d9b56e6ff381d4bea3e) [34](https://github.com/KurimuzonAkuma/pyrogram/pull/34)
+  - [Renamed ttl_seconds to view_once in send_video_note and send_voice](https://github.com/KurimuzonAkuma/pyrogram/commit/50dbfd33fe1647df7e7841f263d7b6e56fb51532)
+
+
 ## [AmanoTeam/pyrogram](https://github.com/AmanoTeam/pyrogram)
   - [chore: release v2.0.106+amn7](https://github.com/AmanoTeam/pyrogram/commit/e67e421088c364f05f408534356bd0c7007a5270)
   - [fix(callback_query_handler): fix inline keyboard editing](https://github.com/AmanoTeam/pyrogram/commit/b66dd206983d5a4e3fe0ba06c1503dab499719fb)
