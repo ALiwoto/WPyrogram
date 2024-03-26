@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, BinaryIO
+from typing import Union, BinaryIO, Optional
 
 import pyrogram
 from pyrogram import raw
@@ -26,6 +26,7 @@ class SetProfilePhoto:
     async def set_profile_photo(
         self: "pyrogram.Client",
         *,
+        fallback: Optional[bool] = None,
         photo: Union[str, BinaryIO] = None,
         video: Union[str, BinaryIO] = None
     ) -> bool:
@@ -42,6 +43,11 @@ class SetProfilePhoto:
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
+            fallback (``bool``, *optional*):
+                If set to True, the chosen profile photo will be shown to users that can't display
+                your main profile photo due to your privacy settings.
+                Defaults to None.
+
             photo (``str`` | ``BinaryIO``, *optional*):
                 Profile photo to set.
                 Pass a file path as string to upload a new photo that exists on your local machine or
@@ -61,6 +67,9 @@ class SetProfilePhoto:
                 # Set a new profile photo
                 await app.set_profile_photo(photo="new_photo.jpg")
 
+                # Set/update your account's public profile photo
+                await app.set_profile_photo(fallback=True, photo="new_photo.jpg")
+
                 # Set a new profile video
                 await app.set_profile_photo(video="new_video.mp4")
         """
@@ -68,6 +77,7 @@ class SetProfilePhoto:
         return bool(
             await self.invoke(
                 raw.functions.photos.UploadProfilePhoto(
+                    fallback=fallback,
                     file=await self.save_file(photo),
                     video=await self.save_file(video)
                 )
