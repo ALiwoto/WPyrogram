@@ -75,6 +75,18 @@ class GetForumTopicsByID:
         chats = {c.id: c for c in getattr(r, "chats", [])}
         messages = {m.id: m for m in getattr(r, "messages", [])}
 
+        for message in messages:
+            if isinstance(message, raw.types.MessageEmpty):
+                continue
+
+            messages[message.id] = await types.Message._parse(
+                client=self, 
+                message=message, 
+                users=users,
+                chats=chats,
+                replies=0
+            )
+
         for current in getattr(r, "topics", []):
             topics.append(types.ForumTopic._parse(
                 self, 

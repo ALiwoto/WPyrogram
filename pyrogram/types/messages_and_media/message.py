@@ -599,7 +599,8 @@ class Message(Object, Update):
         chats: dict,
         topics: dict = None,
         is_scheduled: bool = False,
-        replies: int = 1
+        replies: int = 1,
+        from_topic: types.ForumTopic = None
     ):
         if isinstance(message, raw.types.MessageEmpty):
             return Message(id=message.id, empty=True, client=client, raw=message)
@@ -1066,6 +1067,9 @@ class Message(Object, Update):
             if any((isinstance(entity, raw.types.MessageEntityBlockquote) for entity in message.entities)):
                 parsed_message.quote = True
 
+            if from_topic:
+                parsed_message.topic = from_topic
+            
             if message.reply_to:
                 if isinstance(message.reply_to, raw.types.MessageReplyHeader):
                     if message.reply_to.forum_topic:
@@ -1077,7 +1081,7 @@ class Message(Object, Update):
 
                         parsed_message.message_thread_id = thread_id
 
-                        if topics:
+                        if topics and not parsed_message.topic:
                             parsed_message.topic = types.ForumTopic._parse(client, topics[thread_id], users=users, chats=chats)
                     else:
                         if message.reply_to.quote:
