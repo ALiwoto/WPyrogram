@@ -600,7 +600,7 @@ class Message(Object, Update):
         topics: dict = None,
         is_scheduled: bool = False,
         replies: int = 1,
-        from_topic: types.ForumTopic = None
+        from_topic: "types.ForumTopic" = None
     ):
         if isinstance(message, raw.types.MessageEmpty):
             return Message(id=message.id, empty=True, client=client, raw=message)
