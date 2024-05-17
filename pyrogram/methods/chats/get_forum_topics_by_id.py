@@ -70,28 +70,33 @@ class GetForumTopicsByID:
             )
         )
 
-        topics = types.List()
+        topics_list = []
+        parsed_messages = {}
         users = {u.id: u for u in getattr(r, "users", [])}
         chats = {c.id: c for c in getattr(r, "chats", [])}
+        topics = {t.id: t for t in getattr(r, "topics", [])}
         messages = {m.id: m for m in getattr(r, "messages", [])}
 
-        for message in messages:
+        for message in messages.values():
             if isinstance(message, raw.types.MessageEmpty):
                 continue
 
-            messages[message.id] = await types.Message._parse(
-                client=self, 
-                message=message, 
-                users=users,
-                chats=chats,
-                replies=0
-            )
+            try:
+                parsed_messages[message.id] = await types.Message._parse(
+                    client=self, 
+                    message=message, 
+                    users=users,
+                    chats=chats,
+                    replies=0,
+                    from_topic=True if len(topics_list) != 1 else topics_list[topic_ids[0]]
+                )
+            except: pass
 
-        for current in getattr(r, "topics", []):
-            topics.append(types.ForumTopic._parse(
+        for current in topics.values():
+            topics_list.append(types.ForumTopic._parse(
                 self, 
                 forum_topic=current,
-                messages=messages,
+                messages=parsed_messages,
                 users=users, 
                 chats=chats
             ))
