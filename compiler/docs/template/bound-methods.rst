@@ -88,6 +88,19 @@ InlineQuery
 
     {inline_query_toctree}
 
+PreCheckoutQuery
+-----------
+
+.. hlist::
+    :columns: 2
+
+    {pre_checkout_query_hlist}
+
+.. toctree::
+    :hidden:
+
+    {pre_checkout_query_toctree}
+
 ChatJoinRequest
 ---------------
 
@@ -101,3 +114,28 @@ ChatJoinRequest
 
     {chat_join_request_toctree}
 
+Story
+---------------
+
+.. hlist::
+    :columns: 3
+
+    {story_hlist}
+
+.. toctree::
+    :hidden:
+
+    {story_toctree}
+
+Folder
+---------------
+
+.. hlist::
+    :columns: 2
+
+    {folder_hlist}
+
+.. toctree::
+    :hidden:
+
+    {folder_toctree}

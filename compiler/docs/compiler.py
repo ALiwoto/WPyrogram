@@ -175,6 +175,7 @@ def pyrogram_api():
             edit_inline_reply_markup
             send_chat_action
             delete_messages
+            get_available_effects
             get_messages
             get_scheduled_messages
             get_stickers
@@ -183,12 +184,15 @@ def pyrogram_api():
             get_chat_history_count
             read_chat_history
             send_poll
+            view_messages
             vote_poll
             stop_poll
             retract_vote
             send_dice
             search_messages
             search_messages_count
+            search_posts
+            search_posts_count
             search_global
             search_global_count
             download_media
@@ -261,6 +265,7 @@ def pyrogram_api():
             toggle_join_to_send
             toggle_folder_tags
             set_chat_ttl
+            get_personal_channels
         """,
         users="""
         Users
@@ -279,6 +284,8 @@ def pyrogram_api():
             set_emoji_status
             update_status
             check_username
+            update_birthday
+            update_personal_channel
         """,
         invite_links="""
         Invite Links
@@ -308,6 +315,14 @@ def pyrogram_api():
             get_contacts
             get_contacts_count
         """,
+        payments="""
+        Payments
+            check_gift_code
+        """,
+        phone="""
+        Phone
+            get_call_members
+        """,
         password="""
         Password
             enable_cloud_password
@@ -332,6 +347,11 @@ def pyrogram_api():
             set_chat_menu_button
             get_chat_menu_button
             answer_web_app_query
+            answer_pre_checkout_query
+        """,
+        business="""
+        Business
+            get_business_connection
         """,
         authorization="""
         Authorization
@@ -372,7 +392,7 @@ def pyrogram_api():
             get_stories_archive
             get_stories
             hide_stories
-            increment_story_views
+            view_stories
             pin_stories
             read_stories
             send_story
@@ -423,7 +443,10 @@ def pyrogram_api():
     categories = dict(
         users_chats="""
         Users & Chats
+            Birthday
+            BusinessConnection
             BusinessInfo
+            BusinessIntro
             BusinessMessage
             BusinessRecipients
             BusinessWeeklyOpen
@@ -447,6 +470,7 @@ def pyrogram_api():
             Restriction
             EmojiStatus
             Folder
+            GroupCallMember
             ChatColor
         """,
         messages_media="""
@@ -456,6 +480,7 @@ def pyrogram_api():
             Photo
             Thumbnail
             Audio
+            AvailableEffect
             Document
             Animation
             Video
@@ -483,7 +508,10 @@ def pyrogram_api():
             BoostsStatus
             Giveaway
             GiveawayResult
+            Invoice
             GiftCode
+            CheckedGiftCode
+            SuccessfulPayment
         """,
         bot_keyboards="""
         Bot keyboards
@@ -508,6 +536,9 @@ def pyrogram_api():
             RequestChatInfo
             RequestUserInfo
             RequestPollInfo
+            PaymentInfo
+            PreCheckoutQuery
+            ShippingAddress
         """,
         bot_commands="""
         Bot commands
@@ -631,6 +662,8 @@ def pyrogram_api():
             Message.reply_web_page
             Message.get_media_group
             Message.react
+            Message.read
+            Message.view
         """,
         chat="""
         Chat
@@ -676,6 +709,10 @@ def pyrogram_api():
         InlineQuery
             InlineQuery.answer
         """,
+        pre_checkout_query="""
+        PreCheckoutQuery
+            PreCheckoutQuery.answer
+        """,
         chat_join_request="""
         ChatJoinRequest
             ChatJoinRequest.approve
@@ -702,6 +739,7 @@ def pyrogram_api():
             Story.forward
             Story.download
             Story.read
+            Story.view
         """,
         folder="""
         Folder
