@@ -16,8 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from .birthday import Birthday
+from .business_connection import BusinessConnection
 from .business_info import BusinessInfo
-from .business_message import BusinessMessage
+from .business_intro import BusinessIntro
 from .business_recipients import BusinessRecipients
 from .business_weekly_open import BusinessWeeklyOpen
 from .business_working_hours import BusinessWorkingHours
@@ -39,6 +41,7 @@ from .chat_reactions import ChatReactions
 from .dialog import Dialog
 from .emoji_status import EmojiStatus
 from .folder import Folder
+from .group_call_member import GroupCallMember
 from .invite_link_importer import InviteLinkImporter
 from .restriction import Restriction
 from .user import User
@@ -49,8 +52,10 @@ from .video_chat_scheduled import VideoChatScheduled
 from .video_chat_started import VideoChatStarted
 
 __all__ = [
+    "Birthday",
+    "BusinessConnection",
     "BusinessInfo",
-    "BusinessMessage",
+    "BusinessIntro",
     "BusinessRecipients",
     "BusinessWeeklyOpen",
     "BusinessWorkingHours",
@@ -79,5 +84,6 @@ __all__ = [
     "ChatJoiner",
     "EmojiStatus",
     "Folder",
+    "GroupCallMember",
     "ChatReactions"
 ]

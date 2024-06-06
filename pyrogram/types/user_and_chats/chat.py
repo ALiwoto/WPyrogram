@@ -73,6 +73,9 @@ class Chat(Object):
         is_stories_unavailable (``bool``, *optional*):
             True, if this chat stories is unavailable.
 
+        is_business_bot (``bool``, *optional*):
+            True, if this bot can connect to business account.
+
         title (``str``, *optional*):
             Title, for supergroups, channels and basic group chats.
 
@@ -151,6 +154,14 @@ class Chat(Object):
             Distance in meters of this group chat from your location.
             Returned only in :meth:`~pyrogram.Client.get_nearby_chats`.
 
+        personal_channel (:obj:`~pyrogram.types.Chat`, *optional*):
+            The personal channel linked to this chat.
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
+
+        personal_channel_message (:obj:`~pyrogram.types.Message`, *optional*):
+            The last message in the personal channel of this chat.
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
+
         linked_chat (:obj:`~pyrogram.types.Chat`, *optional*):
             The linked discussion group (in case of channels) or the linked channel (in case of supergroups).
             Returned only in :meth:`~pyrogram.Client.get_chat`.
@@ -174,6 +185,15 @@ class Chat(Object):
 
         business_info (:obj:`~pyrogram.types.BusinessInfo`, *optional*):
             Business information of a chat.
+
+        business_intro (:obj:`~pyrogram.types.BusinessIntro`, *optional*):
+            For private chats with business accounts, the intro of the business.
+
+        birthday (:obj:`~pyrogram.types.Birthday`, *optional*):
+            Information about user birthday.
+
+        raw (:obj:`~pyrogram.raw.base.Chat` | :obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.ChatFull` | :obj:`~pyrogram.raw.base.UserFull`, *optional*):
+            The raw chat or user object, as received from the Telegram API.
     """
 
     def __init__(
@@ -194,6 +214,7 @@ class Chat(Object):
         is_support: bool = None,
         is_stories_hidden: bool = None,
         is_stories_unavailable: bool = None,
+        is_business_bot: bool = None,
         title: str = None,
         username: str = None,
         usernames: List["types.Username"] = None,
@@ -215,13 +236,18 @@ class Chat(Object):
         restrictions: List["types.Restriction"] = None,
         permissions: "types.ChatPermissions" = None,
         distance: int = None,
+        personal_channel: "types.Chat" = None,
+        personal_channel_message: "types.Message" = None,
         linked_chat: "types.Chat" = None,
         send_as_chat: "types.Chat" = None,
         available_reactions: Optional["types.ChatReactions"] = None,
         level: int = None,
         reply_color: "types.ChatColor" = None,
         profile_color: "types.ChatColor" = None,
-        business_info: "types.BusinessInfo" = None
+        business_info: "types.BusinessInfo" = None,
+        business_intro: "types.BusinessIntro" = None,
+        birthday: "types.Birthday" = None,
+        raw: Union["raw.base.Chat", "raw.base.User", "raw.base.ChatFull", "raw.base.UserFull"] = None
     ):
         super().__init__(client)
 
@@ -239,6 +265,7 @@ class Chat(Object):
         self.is_support = is_support
         self.is_stories_hidden = is_stories_hidden
         self.is_stories_unavailable = is_stories_unavailable
+        self.is_business_bot = is_business_bot
         self.title = title
         self.username = username
         self.usernames = usernames
@@ -260,6 +287,8 @@ class Chat(Object):
         self.restrictions = restrictions
         self.permissions = permissions
         self.distance = distance
+        self.personal_channel = personal_channel
+        self.personal_channel_message = personal_channel_message
         self.linked_chat = linked_chat
         self.send_as_chat = send_as_chat
         self.available_reactions = available_reactions
@@ -267,6 +296,9 @@ class Chat(Object):
         self.reply_color = reply_color
         self.profile_color = profile_color
         self.business_info = business_info
+        self.business_intro = business_intro
+        self.birthday = birthday
+        self.raw = raw
 
     @staticmethod
     def _parse_user_chat(client, user: raw.types.User) -> "Chat":
@@ -280,6 +312,9 @@ class Chat(Object):
             is_scam=getattr(user, "scam", None),
             is_fake=getattr(user, "fake", None),
             is_support=getattr(user, "support", None),
+            is_stories_hidden=getattr(user, "stories_hidden", None),
+            is_stories_unavailable=getattr(user, "stories_unavailable", None),
+            is_business_bot=getattr(user, "bot_business", None),
             username=user.username or (user.usernames[0].username if user.usernames else None),
             usernames=types.List([types.Username._parse(r) for r in user.usernames]) or None,
             first_name=user.first_name,
@@ -289,6 +324,7 @@ class Chat(Object):
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
             reply_color=types.ChatColor._parse(getattr(user, "color", None)),
             profile_color=types.ChatColor._parse_profile_color(getattr(user, "profile_color", None)),
+            raw=user,
             client=client
         )
 
@@ -311,6 +347,7 @@ class Chat(Object):
             members_count=getattr(chat, "participants_count", None),
             dc_id=getattr(getattr(chat, "photo", None), "dc_id", None),
             has_protected_content=getattr(chat, "noforwards", None),
+            raw=chat,
             client=client
         )
 
@@ -346,6 +383,7 @@ class Chat(Object):
             level=getattr(channel, "level", None),
             reply_color=types.ChatColor._parse(getattr(channel, "color", None)),
             profile_color=types.ChatColor._parse(getattr(channel, "profile_color", None)),
+            raw=channel,
             client=client
         )
 
@@ -384,12 +422,15 @@ class Chat(Object):
         chats = {c.id: c for c in chat_full.chats}
 
         if isinstance(chat_full, raw.types.users.UserFull):
-            full_user = chat_full.full_user
+            full_user: "raw.types.UserFull" = chat_full.full_user
 
             parsed_chat = Chat._parse_user_chat(client, users[full_user.id])
             parsed_chat.bio = full_user.about
             parsed_chat.folder_id = getattr(full_user, "folder_id", None)
             parsed_chat.business_info = types.BusinessInfo._parse(client, full_user, users)
+            parsed_chat.business_intro = await types.BusinessIntro._parse(client, getattr(full_user, "business_intro", None))
+            parsed_chat.birthday = types.Birthday._parse(getattr(full_user, "birthday", None))
+            parsed_chat.raw = full_user
 
             if full_user.pinned_msg_id:
                 parsed_chat.pinned_message = await client.get_messages(
@@ -397,7 +438,14 @@ class Chat(Object):
                     message_ids=full_user.pinned_msg_id
                 )
 
-            if getattr(full_user, "stories"):
+            if full_user.personal_channel_id:
+                parsed_chat.personal_channel = Chat._parse_channel_chat(client, chats[full_user.personal_channel_id])
+                parsed_chat.personal_channel_message = await client.get_messages(
+                    parsed_chat.personal_channel.id,
+                    message_ids=full_user.personal_channel_message
+                )
+
+            if full_user.stories:
                 peer_stories: raw.types.PeerStories = full_user.stories
                 parsed_chat.stories = types.List(
                     [
@@ -445,7 +493,7 @@ class Chat(Object):
 
                     parsed_chat.send_as_chat = Chat._parse_chat(client, send_as_raw)
 
-                if getattr(full_chat, "stories"):
+                if full_chat.stories:
                     peer_stories: raw.types.PeerStories = full_chat.stories
                     parsed_chat.stories = types.List(
                         [
@@ -456,7 +504,7 @@ class Chat(Object):
                         ]
                     ) or None
 
-                if getattr(full_chat, "wallpaper") and isinstance(full_chat.wallpaper, raw.types.WallPaper):
+                if full_chat.wallpaper and isinstance(full_chat.wallpaper, raw.types.WallPaper):
                     parsed_chat.wallpaper = types.Document._parse(client, full_chat.wallpaper.document, "wallpaper.jpg")
 
             if full_chat.pinned_msg_id:
@@ -469,6 +517,7 @@ class Chat(Object):
                 parsed_chat.invite_link = full_chat.exported_invite.link
 
             parsed_chat.available_reactions = types.ChatReactions._parse(client, full_chat.available_reactions)
+            parsed_chat.raw = full_chat
 
         return parsed_chat
 

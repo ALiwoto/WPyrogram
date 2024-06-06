@@ -29,15 +29,14 @@ from .edit_message_media import EditMessageMedia
 from .edit_message_reply_markup import EditMessageReplyMarkup
 from .edit_message_text import EditMessageText
 from .forward_messages import ForwardMessages
+from .get_available_effects import GetAvailableEffects
 from .get_chat_history import GetChatHistory
 from .get_chat_history_count import GetChatHistoryCount
 from .get_custom_emoji_stickers import GetCustomEmojiStickers
 from .get_discussion_message import GetDiscussionMessage
 from .get_discussion_replies import GetDiscussionReplies
 from .get_discussion_replies_count import GetDiscussionRepliesCount
-from .get_history import GetHistory
 from .get_media_group import GetMediaGroup
-from .get_message_by_link import GetMessageByLink
 from .get_messages import GetMessages
 from .get_scheduled_messages import GetScheduledMessages
 from .get_stickers import GetStickers
@@ -49,6 +48,8 @@ from .search_global import SearchGlobal
 from .search_global_count import SearchGlobalCount
 from .search_messages import SearchMessages
 from .search_messages_count import SearchMessagesCount
+from .search_posts import SearchPosts
+from .search_posts_count import SearchPostsCount
 from .send_animation import SendAnimation
 from .send_audio import SendAudio
 from .send_cached_media import SendCachedMedia
@@ -71,6 +72,7 @@ from .send_web_page import SendWebPage
 from .start_bot import StartBot
 from .stop_poll import StopPoll
 from .stream_media import StreamMedia
+from .view_messages import ViewMessages
 from .vote_poll import VotePoll
 
 
@@ -81,9 +83,8 @@ class Messages(
     EditMessageMedia,
     EditMessageText,
     ForwardMessages,
-    GetHistory,
+    GetAvailableEffects,
     GetMediaGroup,
-    GetMessageByLink,
     GetMessages,
     GetScheduledMessages,
     GetStickers,
@@ -103,6 +104,7 @@ class Messages(
     SendVoice,
     SendPoll,
     SendWebPage,
+    ViewMessages,
     VotePoll,
     StartBot,
     StopPoll,
@@ -124,6 +126,8 @@ class Messages(
     CopyMessage,
     CopyMediaGroup,
     SearchMessagesCount,
+    SearchPosts,
+    SearchPostsCount,
     SearchGlobalCount,
     GetDiscussionMessage,
     SendReaction,

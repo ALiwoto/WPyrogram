@@ -44,7 +44,8 @@ from pyrogram.errors import CDNFileHashMismatch
 from pyrogram.errors import (
     SessionPasswordNeeded,
     VolumeLocNotFound, ChannelPrivate,
-    BadRequest, AuthBytesInvalid
+    BadRequest, AuthBytesInvalid,
+    FloodWait, FloodPremiumWait
 )
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
@@ -52,6 +53,8 @@ from pyrogram.session import Auth, Session
 from pyrogram.storage import Storage, FileStorage, MemoryStorage
 from pyrogram.types import User, TermsOfService, ListenerStopped, ListenerTimeout, ListenerTypes
 from pyrogram.utils import ainput, PyromodConfig
+from pyrogram.types import User, TermsOfService
+from pyrogram.utils import ainput
 from .dispatcher import Dispatcher
 from .file_id import FileId, FileType, ThumbnailSource
 from .mime_types import mime_types
@@ -166,13 +169,6 @@ class Client(Methods):
         skip_updates (``bool``, *optional*):
             Pass True to skip pending updates that arrived while the client was offline.
             Defaults to True.
-        
-        allow_states_update (``bool``, *optional*):
-            Pass True to allow updating states in the db; please consider this might have
-            a performance impact; since we will be sending query to the database a lot,
-            consider disabling this option if you do not want to fetch updates in your bot's
-            offline time.
-            Defaults to True.
 
         takeout (``bool``, *optional*):
             Pass True to let the client use a takeout session instead of a normal one, implies *no_updates=True*.
@@ -205,6 +201,10 @@ class Client(Methods):
             Pass an instance of your own implementation of session storage engine.
             Useful when you want to store your session in databases like Mongo, Redis, etc.
 
+        client_platform (:obj:`~pyrogram.enums.ClientPlatform`, *optional*):
+            The platform where this client is running.
+            Defaults to 'other'
+
         init_connection_params (:obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
@@ -236,37 +236,37 @@ class Client(Methods):
     def __init__(
         self,
         name: str,
-        api_id: Union[int, str] = None,
-        api_hash: str = None,
+        api_id: Optional[Union[int, str]] = None,
+        api_hash: Optional[str] = None,
         app_version: str = APP_VERSION,
         device_model: str = DEVICE_MODEL,
         system_version: str = SYSTEM_VERSION,
         lang_pack: str = LANG_PACK,
         lang_code: str = LANG_CODE,
         system_lang_code: str = SYSTEM_LANG_CODE,
-        ipv6: bool = False,
-        proxy: dict = None,
-        test_mode: bool = False,
-        bot_token: str = None,
-        session_string: str = None,
-        in_memory: bool = None,
-        phone_number: str = None,
-        phone_code: str = None,
-        password: str = None,
+        ipv6: Optional[bool] = False,
+        proxy: Optional[dict] = None,
+        test_mode: Optional[bool] = False,
+        bot_token: Optional[str] = None,
+        session_string: Optional[str] = None,
+        in_memory: Optional[bool] = None,
+        phone_number: Optional[str] = None,
+        phone_code: Optional[str] = None,
+        password: Optional[str] = None,
         workers: int = WORKERS,
-        workdir: str = WORKDIR,
-        plugins: dict = None,
+        workdir: Union[str, Path] = WORKDIR,
+        plugins: Optional[dict] = None,
         parse_mode: "enums.ParseMode" = enums.ParseMode.DEFAULT,
-        no_updates: bool = None,
-        skip_updates: bool = True,
-        allow_states_update: bool = True,
-        takeout: bool = None,
+        no_updates: Optional[bool] = None,
+        skip_updates: Optional[bool] = True,
+        takeout: Optional[bool] = None,
         sleep_threshold: int = Session.SLEEP_THRESHOLD,
-        hide_password: bool = False,
+        hide_password: Optional[bool] = False,
         max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS,
         max_message_cache_size: int = MAX_MESSAGE_CACHE_SIZE,
-        storage_engine: Storage = None,
-        init_connection_params: "raw.base.JSONValue" = None
+        storage_engine: Optional[Storage] = None,
+        client_platform: "enums.ClientPlatform" = enums.ClientPlatform.OTHER,
+        init_connection_params: Optional["raw.base.JSONValue"] = None
     ):
         super().__init__()
 
@@ -294,15 +294,17 @@ class Client(Methods):
         self.parse_mode = parse_mode
         self.no_updates = no_updates
         self.skip_updates = skip_updates
-        self.allow_states_update = allow_states_update
         self.takeout = takeout
         self.sleep_threshold = sleep_threshold
         self.hide_password = hide_password
         self.max_concurrent_transmissions = max_concurrent_transmissions
         self.max_message_cache_size = max_message_cache_size
+        self.client_platform = client_platform
         self.init_connection_params = init_connection_params
 
         self.executor = ThreadPoolExecutor(self.workers, thread_name_prefix="Handler")
+
+        self.storage: Storage
 
         if self.session_string:
             self.storage = MemoryStorage(self.name, self.session_string)
@@ -313,13 +315,18 @@ class Client(Methods):
         else:
             self.storage = FileStorage(self.name, self.workdir)
 
-        self.dispatcher = Dispatcher(self)
+        self.dispatcher: Dispatcher = Dispatcher(self)
 
         self.rnd_id = MsgId
 
-        self.parser = Parser(self)
+        self.parser: Parser = Parser(self)
 
-        self.session = None
+        self.session: Optional[Session] = None
+
+        self.business_connections = {}
+
+        self.sessions = {}
+        self.sessions_lock = asyncio.Lock()
 
         self.media_sessions = {}
         self.media_sessions_lock = asyncio.Lock()
@@ -737,7 +744,7 @@ class Client(Methods):
                 pts = getattr(update, "pts", None)
                 pts_count = getattr(update, "pts_count", None)
 
-                if pts and self.allow_states_update:
+                if pts and not self.skip_updates:
                     await self.storage.update_state(
                         (
                             utils.get_channel_id(channel_id) if channel_id else 0,
@@ -778,7 +785,7 @@ class Client(Methods):
 
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
-            if self.allow_states_update:
+            if not self.skip_updates:
                 await self.storage.update_state(
                     (
                         0,
@@ -998,7 +1005,7 @@ class Client(Methods):
             if isinstance(e, asyncio.CancelledError):
                 raise e
 
-            if isinstance(e, pyrogram.errors.FloodWait):
+            if isinstance(e, (FloodWait, FloodPremiumWait)):
                 raise e
 
             return None
@@ -1232,7 +1239,7 @@ class Client(Methods):
                         await cdn_session.stop()
             except pyrogram.StopTransmission:
                 raise
-            except pyrogram.errors.FloodWait:
+            except (FloodWait, FloodPremiumWait):
                 raise
             except Exception as e:
                 log.exception(e)

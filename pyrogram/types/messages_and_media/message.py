@@ -37,7 +37,7 @@ class Str(str):
     def __init__(self, *args):
         super().__init__()
 
-        self.entities: list = None
+        self.entities: Optional[List["types.MessageEntity"]] = None
 
     def init(self, entities: list):
         self.entities = entities
@@ -102,6 +102,10 @@ class Message(Object, Update):
         message_thread_id (``int``, *optional*):
             Unique identifier of a message thread to which the message belongs.
             For supergroups only.
+
+        effect_id (``int``, *optional*):
+            Unique identifier of the message effect.
+            For private chats only.
 
         reply_to_message_id (``int``, *optional*):
             The id of the message which this message directly replied to.
@@ -205,6 +209,10 @@ class Message(Object, Update):
 
         giveaway (:obj:`~pyrogram.types.Giveaway`, *optional*):
             Message is a giveaway, information about the giveaway.
+
+        invoice (:obj:`~pyrogram.types.Invoice`, *optional*):
+            Message is a invoice, information about the invoice.
+            `More about payments » <https://core.telegram.org/bots/api#payments>`_
 
         story (:obj:`~pyrogram.types.Story`, *optional*):
             Message is a story, information about the story.
@@ -363,6 +371,9 @@ class Message(Object, Update):
         requested_chats (:obj:`~pyrogram.types.RequestedChats`, *optional*):
             Service message: requested chats information.
 
+        successful_payment (:obj:`~pyrogram.types.SuccessfulPayment`, *optional*):
+            Service message: successful payment.
+
         giveaway_launched (``bool``, *optional*):
             Service message: giveaway launched.
 
@@ -371,6 +382,14 @@ class Message(Object, Update):
 
         boosts_applied (``int``, *optional*):
             Service message: how many boosts were applied.
+
+        join_request_approved (``bool``, *optional*):
+            Service message: user join request approved
+
+        business_connection_id (``str``, *optional*):
+            Unique identifier of the business connection from which the message was received.
+            If non-empty, the message belongs to a chat of the corresponding business account that is independent from any potential bot chat which might share the same identifier.
+            This update may at times be triggered by unavailable changes to message fields that are either unavailable or not actively used by the current bot.
 
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
             Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -386,7 +405,7 @@ class Message(Object, Update):
             Generate a link to this message, only for groups and channels.
     """
 
-    # TODO: Add game missing field. Also invoice, successful_payment, connected_website
+    # TODO: Add game missing field. Also successful_payment, connected_website
 
     def __init__(
         self,
@@ -405,6 +424,7 @@ class Message(Object, Update):
         forward_signature: str = None,
         forward_date: datetime = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         reply_to_story_id: int = None,
         reply_to_story_user_id: int = None,
@@ -437,6 +457,7 @@ class Message(Object, Update):
         game: "types.Game" = None,
         giveaway: "types.Giveaway" = None,
         giveaway_result: "types.GiveawayResult" = None,
+        invoice: "types.Invoice" = None,
         story: "types.Story" = None,
         video: "types.Video" = None,
         voice: "types.Voice" = None,
@@ -481,9 +502,12 @@ class Message(Object, Update):
         web_app_data: "types.WebAppData" = None,
         gift_code: "types.GiftCode" = None,
         requested_chats: "types.RequestedChats" = None,
+        successful_payment: "types.SuccessfulPayment" = None,
         giveaway_launched: bool = None,
         chat_ttl_period: int = None,
         boosts_applied: int = None,
+        join_request_approved: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -508,6 +532,7 @@ class Message(Object, Update):
         self.forward_signature = forward_signature
         self.forward_date = forward_date
         self.message_thread_id = message_thread_id
+        self.effect_id = effect_id
         self.reply_to_message_id = reply_to_message_id
         self.reply_to_story_id = reply_to_story_id
         self.reply_to_story_user_id = reply_to_story_user_id
@@ -540,6 +565,7 @@ class Message(Object, Update):
         self.game = game
         self.giveaway = giveaway
         self.giveaway_result = giveaway_result
+        self.invoice = invoice
         self.story = story
         self.video = video
         self.voice = voice
@@ -571,6 +597,7 @@ class Message(Object, Update):
         self.quote = quote
         self.matches = matches
         self.command = command
+        self.business_connection_id = business_connection_id
         self.reply_markup = reply_markup
         self.forum_topic_created = forum_topic_created
         self.forum_topic_closed = forum_topic_closed
@@ -585,9 +612,11 @@ class Message(Object, Update):
         self.web_app_data = web_app_data
         self.gift_code = gift_code
         self.requested_chats = requested_chats
+        self.successful_payment = successful_payment
         self.giveaway_launched = giveaway_launched
         self.chat_ttl_period = chat_ttl_period
         self.boosts_applied = boosts_applied
+        self.join_request_approved = join_request_approved
         self.reactions = reactions
         self.raw = raw
 
@@ -600,10 +629,18 @@ class Message(Object, Update):
         topics: dict = None,
         is_scheduled: bool = False,
         replies: int = 1,
-        from_topic: "types.ForumTopic" = None
+        from_topic: "types.ForumTopic" = None,
+        business_connection_id: str = None,
+        reply_to_message: "raw.base.Message" = None
     ):
         if isinstance(message, raw.types.MessageEmpty):
-            return Message(id=message.id, empty=True, client=client, raw=message)
+            return Message(
+                id=message.id,
+                empty=True,
+                business_connection_id=business_connection_id,
+                raw=message,
+                client=client,
+            )
 
         from_id = utils.get_raw_peer_id(message.from_id)
         peer_id = utils.get_raw_peer_id(message.peer_id)
@@ -653,8 +690,10 @@ class Message(Object, Update):
             gift_code = None
             giveaway_launched = None
             requested_chats = None
+            successful_payment = None
             chat_ttl_period = None
             boosts_applied = None
+            join_request_approved = None
 
             service_type = None
 
@@ -689,7 +728,7 @@ class Message(Object, Update):
                 new_chat_photo = types.Photo._parse(client, action.photo)
                 service_type = enums.MessageServiceType.NEW_CHAT_PHOTO
             elif isinstance(action, raw.types.MessageActionCustomAction):
-                text = message.action.message
+                text = action.message
                 service_type = enums.MessageServiceType.CUSTOM_ACTION
             elif isinstance(action, raw.types.MessageActionTopicCreate):
                 forum_topic_created = types.ForumTopicCreated._parse(message)
@@ -733,15 +772,21 @@ class Message(Object, Update):
             elif isinstance(action, raw.types.MessageActionGiftCode):
                 gift_code = types.GiftCode._parse(client, action, chats)
                 service_type = enums.MessageServiceType.GIFT_CODE
-            elif isinstance(action, raw.types.MessageActionRequestedPeer):
+            elif isinstance(action, (raw.types.MessageActionRequestedPeer, raw.types.MessageActionRequestedPeerSentMe)):
                 requested_chats = types.RequestedChats._parse(client, action)
                 service_type = enums.MessageServiceType.REQUESTED_CHAT
+            elif isinstance(action, (raw.types.MessageActionPaymentSent, raw.types.MessageActionPaymentSentMe)):
+                successful_payment = types.SuccessfulPayment._parse(client, action)
+                service_type = enums.MessageServiceType.SUCCESSFUL_PAYMENT
             elif isinstance(action, raw.types.MessageActionSetMessagesTTL):
                 chat_ttl_period = action.period
                 service_type = enums.MessageServiceType.CHAT_TTL_CHANGED
             elif isinstance(action, raw.types.MessageActionBoostApply):
                 boosts_applied = action.boosts
                 service_type = enums.MessageServiceType.BOOST_APPLY
+            elif isinstance(action, raw.types.MessageActionChatJoinedByRequest):
+                join_request_approved = True
+                service_type = enums.MessageServiceType.JOIN_REQUEST_APPROVED
 
             from_user = types.User._parse(client, users.get(user_id, None))
             sender_chat = types.Chat._parse(client, message, users, chats, is_chat=False) if not from_user else None
@@ -778,8 +823,11 @@ class Message(Object, Update):
                 giveaway_launched=giveaway_launched,
                 gift_code=gift_code,
                 requested_chats=requested_chats,
+                successful_payment=successful_payment,
                 chat_ttl_period=chat_ttl_period,
                 boosts_applied=boosts_applied,
+                join_request_approved=join_request_approved,
+                business_connection_id=business_connection_id,
                 raw=message,
                 client=client
                 # TODO: supergroup_chat_created
@@ -859,6 +907,7 @@ class Message(Object, Update):
             game = None
             giveaway = None
             giveaway_result = None
+            invoice = None
             story = None
             audio = None
             voice = None
@@ -898,6 +947,9 @@ class Message(Object, Update):
                 elif isinstance(media, raw.types.MessageMediaGiveawayResults):
                     giveaway_result = await types.GiveawayResult._parse(client, media, users, chats)
                     media_type = enums.MessageMediaType.GIVEAWAY_RESULT
+                elif isinstance(media, raw.types.MessageMediaInvoice):
+                    invoice = types.Invoice._parse(client, media)
+                    media_type = enums.MessageMediaType.INVOICE
                 elif isinstance(media, raw.types.MessageMediaStory):
                     if media.story:
                         story = await types.Story._parse(client, media.story, users, chats, media.peer)
@@ -994,6 +1046,7 @@ class Message(Object, Update):
             parsed_message = Message(
                 id=message.id,
                 message_thread_id=message_thread_id,
+                effect_id=getattr(message, "effect", None),
                 date=utils.timestamp_to_datetime(message.date),
                 chat=types.Chat._parse(client, message, users, chats, is_chat=True),
                 from_user=from_user,
@@ -1045,6 +1098,7 @@ class Message(Object, Update):
                 game=game,
                 giveaway=giveaway,
                 giveaway_result=giveaway_result,
+                invoice=invoice,
                 story=story,
                 video=video,
                 video_note=video_note,
@@ -1058,6 +1112,7 @@ class Message(Object, Update):
                 sender_boost_count=getattr(message, "from_boosts_applied", None),
                 via_bot=types.User._parse(client, users.get(message.via_bot_id, None)),
                 outgoing=message.out,
+                business_connection_id=business_connection_id,
                 reply_markup=reply_markup,
                 reactions=reactions,
                 raw=message,
@@ -1163,7 +1218,7 @@ class Message(Object, Update):
     def link(self) -> str:
         if (
             self.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL)
-            and self.chat.username
+            or self.chat.username
         ):
             return f"https://t.me/{self.chat.username}/{self.id}"
         else:
@@ -1215,12 +1270,14 @@ class Message(Object, Update):
         disable_web_page_preview: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         show_above_text: bool = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
+        business_connection_id: str = None,
         reply_markup=None
     ) -> "Message":
         """Bound method *reply_text* of :obj:`~pyrogram.types.Message`.
@@ -1269,6 +1326,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             show_above_text (``bool``, *optional*):
                 If True, link preview will be shown above the message text.
                 Otherwise, the link preview will be shown below the message text.
@@ -1287,6 +1348,9 @@ class Message(Object, Update):
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1307,6 +1371,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_message(
             chat_id=self.chat.id,
             text=text,
@@ -1315,12 +1382,14 @@ class Message(Object, Update):
             disable_web_page_preview=disable_web_page_preview,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             show_above_text=show_above_text,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
             schedule_date=schedule_date,
             protect_content=protect_content,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup
         )
 
@@ -1339,6 +1408,7 @@ class Message(Object, Update):
         height: int = 0,
         thumb: str = None,
         disable_notification: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1346,6 +1416,7 @@ class Message(Object, Update):
             "types.ForceReply"
         ] = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
@@ -1416,6 +1487,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -1424,6 +1499,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1468,6 +1546,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_animation(
             chat_id=self.chat.id,
             animation=animation,
@@ -1481,9 +1562,11 @@ class Message(Object, Update):
             thumb=thumb,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -1502,9 +1585,11 @@ class Message(Object, Update):
         thumb: str = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1575,6 +1660,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -1583,6 +1672,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1627,6 +1719,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_audio(
             chat_id=self.chat.id,
             audio=audio,
@@ -1639,9 +1734,11 @@ class Message(Object, Update):
             thumb=thumb,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -1659,6 +1756,7 @@ class Message(Object, Update):
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1719,6 +1817,9 @@ class Message(Object, Update):
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -1738,6 +1839,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_cached_media(
             chat_id=self.chat.id,
             file_id=file_id,
@@ -1749,10 +1853,15 @@ class Message(Object, Update):
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup
         )
 
-    async def reply_chat_action(self, action: "enums.ChatAction") -> bool:
+    async def reply_chat_action(
+        self,
+        action: "enums.ChatAction",
+        business_connection_id: str = None
+    ) -> bool:
         """Bound method *reply_chat_action* of :obj:`~pyrogram.types.Message`.
 
         Use as a shortcut for:
@@ -1777,6 +1886,9 @@ class Message(Object, Update):
             action (:obj:`~pyrogram.enums.ChatAction`):
                 Type of action to broadcast.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
+
         Returns:
             ``bool``: On success, True is returned.
 
@@ -1784,9 +1896,13 @@ class Message(Object, Update):
             RPCError: In case of a Telegram RPC error.
             ValueError: In case the provided string is not a valid chat action.
         """
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_chat_action(
             chat_id=self.chat.id,
-            action=action
+            action=action,
+            business_connection_id=business_connection_id
         )
 
     async def reply_contact(
@@ -1798,10 +1914,12 @@ class Message(Object, Update):
         vcard: str = "",
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1852,6 +1970,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -1864,6 +1986,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1884,6 +2009,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_contact(
             chat_id=self.chat.id,
             phone_number=phone_number,
@@ -1892,10 +2020,12 @@ class Message(Object, Update):
             vcard=vcard,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             parse_mode=parse_mode,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup
         )
 
@@ -1911,11 +2041,13 @@ class Message(Object, Update):
         force_document: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -1986,6 +2118,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -2004,6 +2140,9 @@ class Message(Object, Update):
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2048,6 +2187,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_document(
             chat_id=self.chat.id,
             document=document,
@@ -2059,11 +2201,13 @@ class Message(Object, Update):
             force_document=force_document,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
             schedule_date=schedule_date,
             protect_content=protect_content,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -2075,7 +2219,9 @@ class Message(Object, Update):
         quote: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -2116,6 +2262,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -2143,6 +2293,7 @@ class Message(Object, Update):
             game_short_name=game_short_name,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             reply_markup=reply_markup
         )
@@ -2243,9 +2394,11 @@ class Message(Object, Update):
         quote: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -2290,6 +2443,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
 
@@ -2298,6 +2455,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2318,15 +2478,20 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_location(
             chat_id=self.chat.id,
             latitude=latitude,
             longitude=longitude,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup
         )
 
@@ -2336,10 +2501,12 @@ class Message(Object, Update):
         quote: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         parse_mode: Optional["enums.ParseMode"] = None,
-        quote_entities: List["types.MessageEntity"] = None
+        quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None
     ) -> List["types.Message"]:
         """Bound method *reply_media_group* of :obj:`~pyrogram.types.Message`.
 
@@ -2376,6 +2543,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -2388,6 +2559,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
         Returns:
             On success, a :obj:`~pyrogram.types.Messages` object is returned containing all the
@@ -2405,15 +2579,20 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_media_group(
             chat_id=self.chat.id,
             media=media,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             parse_mode=parse_mode,
-            quote_entities=quote_entities
+            quote_entities=quote_entities,
+            business_connection_id=business_connection_id
         )
 
     async def reply_photo(
@@ -2427,9 +2606,12 @@ class Message(Object, Update):
         ttl_seconds: int = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        view_once: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -2493,6 +2675,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -2501,6 +2687,13 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            view_once (``bool``, *optional*):
+                Self-Destruct Timer.
+                If True, the photo will self-destruct after it was viewed.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2545,6 +2738,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_photo(
             chat_id=self.chat.id,
             photo=photo,
@@ -2555,9 +2751,12 @@ class Message(Object, Update):
             ttl_seconds=ttl_seconds,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            view_once=view_once,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -2571,6 +2770,8 @@ class Message(Object, Update):
         type: "enums.PollType" = enums.PollType.REGULAR,
         allows_multiple_answers: bool = None,
         correct_option_id: int = None,
+        question_parse_mode: Optional["enums.ParseMode"] = None,
+        question_entities: Optional[List["types.MessageEntity"]] = None,
         explanation: str = None,
         explanation_parse_mode: "enums.ParseMode" = None,
         explanation_entities: List["types.MessageEntity"] = None,
@@ -2581,11 +2782,15 @@ class Message(Object, Update):
         disable_notification: bool = None,
         protect_content: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
-        parse_mode: Optional["enums.ParseMode"] = None,
+        quote_parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
+        quote_offset: Optional[int] = None,
         schedule_date: datetime = None,
+        business_connection_id: str = None,
+        options_parse_mode: List["types.MessageEntity"] = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -2632,6 +2837,14 @@ class Message(Object, Update):
             correct_option_id (``int``, *optional*):
                 0-based identifier of the correct answer option, required for polls in quiz mode.
 
+            question_parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles.
+                You can combine both syntaxes together.
+
+            question_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+                List of special entities that appear in the poll question, which can be specified instead of
+                *parse_mode*.
+
             explanation (``str``, *optional*):
                 Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style
                 poll, 0-200 characters with at most 2 line feeds after entities parsing.
@@ -2673,21 +2886,35 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
             quote_text (``str``):
                 Text of the quote to be sent.
 
-            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+            quote_parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
 
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
+
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
+
+            options_parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles.
+                You can combine both syntaxes together.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2708,6 +2935,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_poll(
             chat_id=self.chat.id,
             question=question,
@@ -2716,6 +2946,8 @@ class Message(Object, Update):
             type=type,
             allows_multiple_answers=allows_multiple_answers,
             correct_option_id=correct_option_id,
+            question_parse_mode=question_parse_mode,
+            question_entities=question_entities,
             explanation=explanation,
             explanation_parse_mode=explanation_parse_mode,
             explanation_entities=explanation_entities,
@@ -2725,11 +2957,15 @@ class Message(Object, Update):
             disable_notification=disable_notification,
             protect_content=protect_content,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
-            parse_mode=parse_mode,
+            quote_parse_mode=quote_parse_mode,
             quote_entities=quote_entities,
+            quote_offset=quote_offset,
             schedule_date=schedule_date,
+            business_connection_id=business_connection_id,
+            options_parse_mode=options_parse_mode,
             reply_markup=reply_markup
         )
 
@@ -2739,10 +2975,12 @@ class Message(Object, Update):
         quote: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -2788,6 +3026,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -2800,6 +3042,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2844,15 +3089,20 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_sticker(
             chat_id=self.chat.id,
             sticker=sticker,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             parse_mode=parse_mode,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -2869,10 +3119,12 @@ class Message(Object, Update):
         foursquare_type: str = "",
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -2932,6 +3184,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
 
@@ -2944,6 +3200,9 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2964,6 +3223,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_venue(
             chat_id=self.chat.id,
             latitude=latitude,
@@ -2974,10 +3236,12 @@ class Message(Object, Update):
             foursquare_type=foursquare_type,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             parse_mode=parse_mode,
             quote_entities=quote_entities,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup
         )
 
@@ -2997,10 +3261,12 @@ class Message(Object, Update):
         supports_streaming: bool = True,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
         no_sound: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3082,6 +3348,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -3094,6 +3364,9 @@ class Message(Object, Update):
             no_sound (``bool``, *optional*):
                 Pass True, if the uploaded video is a video message with no sound.
                 Doesn't work for external links.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3138,6 +3411,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_video(
             chat_id=self.chat.id,
             video=video,
@@ -3153,10 +3429,12 @@ class Message(Object, Update):
             supports_streaming=supports_streaming,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
             no_sound=no_sound,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -3171,12 +3449,14 @@ class Message(Object, Update):
         thumb: str = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: List["types.MessageEntity"] = None,
         protect_content: bool = None,
         view_once: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3234,6 +3514,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
 
@@ -3253,6 +3537,9 @@ class Message(Object, Update):
             view_once (``bool``, *optional*):
                 Self-Destruct Timer.
                 If True, the video note will self-destruct after it was viewed.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3297,6 +3584,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_video_note(
             chat_id=self.chat.id,
             video_note=video_note,
@@ -3305,12 +3595,14 @@ class Message(Object, Update):
             thumb=thumb,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             parse_mode=parse_mode,
             quote_entities=quote_entities,
             protect_content=protect_content,
             view_once=view_once,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -3326,10 +3618,12 @@ class Message(Object, Update):
         duration: int = 0,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
         view_once: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3388,6 +3682,10 @@ class Message(Object, Update):
                 Unique identifier of a message thread to which the message belongs.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
 
@@ -3400,6 +3698,9 @@ class Message(Object, Update):
             view_once (``bool``, *optional*):
                 Self-Destruct Timer.
                 If True, the voice note will self-destruct after it was listened.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3444,6 +3745,9 @@ class Message(Object, Update):
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
 
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_voice(
             chat_id=self.chat.id,
             voice=voice,
@@ -3453,10 +3757,12 @@ class Message(Object, Update):
             duration=duration,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
             view_once=view_once,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -3465,6 +3771,7 @@ class Message(Object, Update):
     async def reply_web_page(
         self,
         text: str = None,
+        quote: bool = None,
         url: str = None,
         prefer_large_media: bool = None,
         prefer_small_media: bool = None,
@@ -3472,6 +3779,7 @@ class Message(Object, Update):
         entities: List["types.MessageEntity"] = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         show_above_text: bool = None,
         reply_to_message_id: int = None,
         reply_to_chat_id: Union[int, str] = None,
@@ -3481,6 +3789,7 @@ class Message(Object, Update):
         quote_offset: int = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3539,6 +3848,10 @@ class Message(Object, Update):
                 Unique identifier for the target message thread (topic) of the forum.
                 for forum supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -3563,6 +3876,9 @@ class Message(Object, Update):
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -3570,6 +3886,18 @@ class Message(Object, Update):
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
         """
+        if quote is None:
+            quote = self.chat.type != enums.ChatType.PRIVATE
+
+        if reply_to_message_id is None and quote:
+            reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
+
+        if business_connection_id is None:
+            business_connection_id = self.business_connection_id
+
         return await self._client.send_web_page(
             chat_id=self.chat.id,
             text=text,
@@ -3580,6 +3908,7 @@ class Message(Object, Update):
             entities=entities,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            effect_id=effect_id,
             show_above_text=show_above_text,
             reply_to_message_id=reply_to_message_id,
             reply_to_chat_id=reply_to_chat_id,
@@ -3589,6 +3918,7 @@ class Message(Object, Update):
             quote_offset=quote_offset,
             schedule_date=schedule_date,
             protect_content=protect_content,
+            business_connection_id=business_connection_id,
             reply_markup=reply_markup
         )
 
@@ -3871,6 +4201,7 @@ class Message(Object, Update):
         schedule_date: datetime = None,
         protect_content: bool = None,
         has_spoiler: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3939,9 +4270,8 @@ class Message(Object, Update):
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
-            has_spoiler (``bool``, *optional*):
-                True, if the message media is covered by a spoiler animation.
-
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -3977,6 +4307,7 @@ class Message(Object, Update):
                 quote_entities=quote_entities,
                 schedule_date=schedule_date,
                 protect_content=protect_content,
+                business_connection_id=business_connection_id,
                 reply_markup=self.reply_markup if reply_markup is object else reply_markup
             )
         elif self.media:
@@ -3991,7 +4322,8 @@ class Message(Object, Update):
                 quote_entities=quote_entities,
                 schedule_date=schedule_date,
                 protect_content=protect_content,
-                has_spoiler=has_spoiler,
+                has_spoiler=self.has_media_spoiler if has_spoiler is None else has_spoiler,
+                business_connection_id=business_connection_id,
                 reply_markup=self.reply_markup if reply_markup is object else reply_markup
             )
 
@@ -4020,7 +4352,8 @@ class Message(Object, Update):
                     vcard=self.contact.vcard,
                     disable_notification=disable_notification,
                     message_thread_id=message_thread_id,
-                    schedule_date=schedule_date
+                    schedule_date=schedule_date,
+                    business_connection_id=business_connection_id
                 )
             elif self.location:
                 return await self._client.send_location(
@@ -4029,7 +4362,8 @@ class Message(Object, Update):
                     longitude=self.location.longitude,
                     disable_notification=disable_notification,
                     message_thread_id=message_thread_id,
-                    schedule_date=schedule_date
+                    schedule_date=schedule_date,
+                    business_connection_id=business_connection_id
                 )
             elif self.venue:
                 return await self._client.send_venue(
@@ -4042,7 +4376,8 @@ class Message(Object, Update):
                     foursquare_type=self.venue.foursquare_type,
                     disable_notification=disable_notification,
                     message_thread_id=message_thread_id,
-                    schedule_date=schedule_date
+                    schedule_date=schedule_date,
+                    business_connection_id=business_connection_id
                 )
             elif self.poll:
                 return await self._client.send_poll(
@@ -4051,7 +4386,8 @@ class Message(Object, Update):
                     options=[opt.text for opt in self.poll.options],
                     disable_notification=disable_notification,
                     message_thread_id=message_thread_id,
-                    schedule_date=schedule_date
+                    schedule_date=schedule_date,
+                    business_connection_id=business_connection_id
                 )
             elif self.game:
                 return await self._client.send_game(
@@ -4119,7 +4455,15 @@ class Message(Object, Update):
             revoke=revoke
         )
 
-    async def click(self, x: Union[int, str] = 0, y: int = None, quote: bool = None, timeout: int = 10):
+    async def click(
+        self,
+        x: Union[int, str] = 0,
+        y: int = None,
+        quote: bool = None,
+        timeout: int = 10,
+        request_write_access: bool = True,
+        password: str = None
+    ):
         """Bound method *click* of :obj:`~pyrogram.types.Message`.
 
         Use as a shortcut for clicking a button attached to the message instead of:
@@ -4171,11 +4515,22 @@ class Message(Object, Update):
             timeout (``int``, *optional*):
                 Timeout in seconds.
 
+            request_write_access (``bool``, *optional*):
+                Only used in case of :obj:`~pyrogram.types.LoginUrl` button.
+                True, if the bot can send messages to the user.
+                Defaults to ``True``.
+
+            password (``str``, *optional*):
+                When clicking certain buttons (such as BotFather's confirmation button to transfer ownership), if your account has 2FA enabled, you need to provide your account's password.
+                The 2-step verification password for the current user. Only applicable, if the :obj:`~pyrogram.types.InlineKeyboardButton` contains ``requires_password``.
+
         Returns:
             -   The result of :meth:`~pyrogram.Client.request_callback_answer` in case of inline callback button clicks.
             -   The result of :meth:`~Message.reply()` in case of normal button clicks.
             -   A string in case the inline button is a URL, a *switch_inline_query* or a
                 *switch_inline_query_current_chat* button.
+            -   A string URL with the user details, in case of a WebApp button.
+            -   A :obj:`~pyrogram.types.Chat` object in case of a ``KeyboardButtonUserProfile`` button.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -4229,8 +4584,53 @@ class Message(Object, Update):
                     callback_data=button.callback_data,
                     timeout=timeout
                 )
+            elif button.requires_password:
+                if password is None:
+                    raise ValueError(
+                        "This button requires a password"
+                    )
+
+                return await self._client.request_callback_answer(
+                    chat_id=self.chat.id,
+                    message_id=self.id,
+                    callback_data=button.callback_data,
+                    password=password,
+                    timeout=timeout
+                )
             elif button.url:
                 return button.url
+            elif button.web_app:
+                web_app = button.web_app
+
+                bot_peer_id = (
+                    self.via_bot and
+                    self.via_bot.id
+                ) or (
+                    self.from_user and
+                    self.from_user.is_bot and
+                    self.from_user.id
+                ) or None
+
+                if not bot_peer_id:
+                    raise ValueError(
+                        "This button requires a bot as the sender"
+                    )
+
+                r = await self._client.invoke(
+                    raw.functions.messages.RequestWebView(
+                        peer=await self._client.resolve_peer(self.chat.id),
+                        bot=await self._client.resolve_peer(bot_peer_id),
+                        url=web_app.url,
+                        platform=self._client.client_platform.value,
+                        # TODO
+                    )
+                )
+                return r.url
+            elif button.user_id:
+                return await self._client.get_chat(
+                    button.user_id,
+                    force_full=False
+                )
             elif button.switch_inline_query:
                 return button.switch_inline_query
             elif button.switch_inline_query_current_chat:
@@ -4238,7 +4638,7 @@ class Message(Object, Update):
             else:
                 raise ValueError("This button is not supported yet")
         else:
-            await self.reply(button, quote=quote)
+            await self.reply(text=button, quote=quote)
 
     async def react(self, emoji: Union[int, str, List[Union[int, str]]] = None, big: bool = False) -> bool:
         """Bound method *react* of :obj:`~pyrogram.types.Message`.
@@ -4489,6 +4889,62 @@ class Message(Object, Update):
             RPCError: In case of a Telegram RPC error.
         """
         return await self._client.unpin_chat_message(
+            chat_id=self.chat.id,
+            message_id=self.id
+        )
+
+    async def read(self) -> bool:
+        """Bound method *read* of :obj:`~pyrogram.types.Message`.
+
+        Use as a shortcut for:
+
+        .. code-block:: python
+
+            await client.read_chat_history(
+                chat_id=message.chat.id,
+                max_id=message_id
+            )
+
+        Example:
+            .. code-block:: python
+
+                await message.read()
+
+        Returns:
+            True on success.
+
+        Raises:
+            RPCError: In case of a Telegram RPC error.
+        """
+        return await self._client.read_chat_history(
+            chat_id=self.chat.id,
+            max_id=self.id
+        )
+
+    async def view(self) -> bool:
+        """Bound method *view* of :obj:`~pyrogram.types.Message`.
+
+        Use as a shortcut for:
+
+        .. code-block:: python
+
+            await client.view_messages(
+                chat_id=message.chat.id,
+                message_id=message_id
+            )
+
+        Example:
+            .. code-block:: python
+
+                await message.view()
+
+        Returns:
+            True on success.
+
+        Raises:
+            RPCError: In case of a Telegram RPC error.
+        """
+        return await self._client.view_messages(
             chat_id=self.chat.id,
             message_id=self.id
         )

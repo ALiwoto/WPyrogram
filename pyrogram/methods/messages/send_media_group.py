@@ -45,6 +45,7 @@ class SendMediaGroup:
         ]],
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
@@ -55,6 +56,7 @@ class SendMediaGroup:
         schedule_date: datetime = None,
         protect_content: bool = None,
         show_above_text: bool = None,
+        business_connection_id: str = None
     ) -> List["types.Message"]:
         """Send a group of photos or videos as an album.
 
@@ -76,6 +78,10 @@ class SendMediaGroup:
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
                 For supergroups only.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -109,6 +115,9 @@ class SendMediaGroup:
                 If True, link preview will be shown above the message text.
                 Otherwise, the link preview will be shown below the message text.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
+
         Returns:
             List of :obj:`~pyrogram.types.Message`: On success, a list of the sent messages is returned.
 
@@ -138,7 +147,8 @@ class SendMediaGroup:
                                 media=raw.types.InputMediaUploadedPhoto(
                                     file=await self.save_file(i.media),
                                     spoiler=i.has_spoiler
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -157,7 +167,8 @@ class SendMediaGroup:
                                 media=raw.types.InputMediaPhotoExternal(
                                     url=i.media,
                                     spoiler=i.has_spoiler
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -178,7 +189,8 @@ class SendMediaGroup:
                             media=raw.types.InputMediaUploadedPhoto(
                                 file=await self.save_file(i.media),
                                 spoiler=i.has_spoiler
-                            )
+                            ),
+                            business_connection_id=business_connection_id
                         )
                     )
 
@@ -211,7 +223,8 @@ class SendMediaGroup:
                                         ),
                                         raw.types.DocumentAttributeFilename(file_name=os.path.basename(i.media))
                                     ]
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -230,7 +243,8 @@ class SendMediaGroup:
                                 media=raw.types.InputMediaDocumentExternal(
                                     url=i.media,
                                     spoiler=i.has_spoiler
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -263,7 +277,8 @@ class SendMediaGroup:
                                     ),
                                     raw.types.DocumentAttributeFilename(file_name=getattr(i.media, "name", "video.mp4"))
                                 ]
-                            )
+                            ),
+                            business_connection_id=business_connection_id
                         )
                     )
 
@@ -293,7 +308,8 @@ class SendMediaGroup:
                                         ),
                                         raw.types.DocumentAttributeFilename(file_name=os.path.basename(i.media))
                                     ]
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -310,7 +326,8 @@ class SendMediaGroup:
                                 peer=await self.resolve_peer(chat_id),
                                 media=raw.types.InputMediaDocumentExternal(
                                     url=i.media
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -339,7 +356,8 @@ class SendMediaGroup:
                                     ),
                                     raw.types.DocumentAttributeFilename(file_name=getattr(i.media, "name", "audio.mp3"))
                                 ]
-                            )
+                            ),
+                            business_connection_id=business_connection_id
                         )
                     )
 
@@ -363,7 +381,8 @@ class SendMediaGroup:
                                     attributes=[
                                         raw.types.DocumentAttributeFilename(file_name=os.path.basename(i.media))
                                     ]
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -380,7 +399,8 @@ class SendMediaGroup:
                                 peer=await self.resolve_peer(chat_id),
                                 media=raw.types.InputMediaDocumentExternal(
                                     url=i.media
-                                )
+                                ),
+                                business_connection_id=business_connection_id
                             )
                         )
 
@@ -406,7 +426,8 @@ class SendMediaGroup:
                                 attributes=[
                                     raw.types.DocumentAttributeFilename(file_name=getattr(i.media, "name", "file.zip"))
                                 ]
-                            )
+                            ),
+                            business_connection_id=business_connection_id
                         )
                     )
 
@@ -447,10 +468,19 @@ class SendMediaGroup:
                 ),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
-                invert_media=show_above_text
+                invert_media=show_above_text,
+                effect=effect_id,
             ),
-            sleep_threshold=60
+            sleep_threshold=60,
+            business_connection_id=business_connection_id
         )
+
+        conn_id = None
+
+        for i in r.updates:
+            if getattr(i, "connection_id", None):
+                conn_id = i.connection_id
+
 
         return await utils.parse_messages(
             self,
@@ -458,10 +488,12 @@ class SendMediaGroup:
                 messages=[m.message for m in filter(
                     lambda u: isinstance(u, (raw.types.UpdateNewMessage,
                                              raw.types.UpdateNewChannelMessage,
-                                             raw.types.UpdateNewScheduledMessage)),
+                                             raw.types.UpdateNewScheduledMessage,
+                                             raw.types.UpdateBotNewBusinessMessage)),
                     r.updates
                 )],
                 users=r.users,
                 chats=r.chats
-            )
+            ),
+            business_connection_id=conn_id
         )

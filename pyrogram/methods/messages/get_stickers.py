@@ -58,7 +58,9 @@ class GetStickers:
             )
         )
 
-        return [
-            await types.Sticker._parse(self, doc, {type(a): a for a in doc.attributes})
-            for doc in sticker_set.documents
-        ]
+        return types.List(
+            [
+                await types.Sticker._parse(self, doc, {type(a): a for a in doc.attributes})
+                for doc in sticker_set.documents
+            ]
+        )

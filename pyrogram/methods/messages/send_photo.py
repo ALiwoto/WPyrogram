@@ -41,6 +41,7 @@ class SendPhoto:
         ttl_seconds: int = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        effect_id: int = None,
         reply_to_message_id: int = None,
         reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
@@ -49,6 +50,8 @@ class SendPhoto:
         quote_offset: int = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
+        view_once: bool = None,
+        business_connection_id: str = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -101,6 +104,10 @@ class SendPhoto:
                 Unique identifier for the target message thread (topic) of the forum.
                 For supergroups only.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
 
@@ -124,6 +131,13 @@ class SendPhoto:
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
+
+            view_once (``bool``, *optional*):
+                Self-Destruct Timer.
+                If True, the photo will self-destruct after it was viewed.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -178,22 +192,22 @@ class SendPhoto:
                     file = await self.save_file(photo, progress=progress, progress_args=progress_args)
                     media = raw.types.InputMediaUploadedPhoto(
                         file=file,
-                        ttl_seconds=ttl_seconds,
+                        ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                         spoiler=has_spoiler,
                     )
                 elif re.match("^https?://", photo):
                     media = raw.types.InputMediaPhotoExternal(
                         url=photo,
-                        ttl_seconds=ttl_seconds,
+                        ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                         spoiler=has_spoiler
                     )
                 else:
-                    media = utils.get_input_media_from_file_id(photo, FileType.PHOTO, ttl_seconds=ttl_seconds, has_spoiler=has_spoiler)
+                    media = utils.get_input_media_from_file_id(photo, FileType.PHOTO, ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds, has_spoiler=has_spoiler)
             else:
                 file = await self.save_file(photo, progress=progress, progress_args=progress_args)
                 media = raw.types.InputMediaUploadedPhoto(
                     file=file,
-                    ttl_seconds=ttl_seconds,
+                    ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                     spoiler=has_spoiler
                 )
 
@@ -220,8 +234,10 @@ class SendPhoto:
                             schedule_date=utils.datetime_to_timestamp(schedule_date),
                             noforwards=protect_content,
                             reply_markup=await reply_markup.write(self) if reply_markup else None,
+                            effect=effect_id,
                             **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
-                        )
+                        ),
+                        business_connection_id=business_connection_id
                     )
                 except FilePartMissing as e:
                     await self.save_file(photo, file_id=file.id, file_part=e.value)
@@ -229,12 +245,14 @@ class SendPhoto:
                     for i in r.updates:
                         if isinstance(i, (raw.types.UpdateNewMessage,
                                           raw.types.UpdateNewChannelMessage,
-                                          raw.types.UpdateNewScheduledMessage)):
+                                          raw.types.UpdateNewScheduledMessage,
+                                          raw.types.UpdateBotNewBusinessMessage)):
                             return await types.Message._parse(
                                 self, i.message,
                                 {i.id: i for i in r.users},
                                 {i.id: i for i in r.chats},
-                                is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage)
+                                is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
+                                business_connection_id=getattr(i, "connection_id", None)
                             )
         except pyrogram.StopTransmission:
             return None

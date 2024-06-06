@@ -18,7 +18,7 @@
 
 import html
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pyrogram
 from pyrogram import enums, utils
@@ -110,7 +110,10 @@ class User(Object, Update):
             True, if this user has hidden stories.
 
         is_stories_unavailable (``bool``, *optional*):
-            True, if this chat stories is unavailable.
+            True, if this user stories is unavailable.
+
+        is_business_bot (``bool``, *optional*):
+            True, if this bot can connect to business account.
 
         first_name (``str``, *optional*):
             User's or bot's first name.
@@ -164,11 +167,14 @@ class User(Object, Update):
             ``user.mention("another name")`` for a custom name. To choose a different style
             ("html" or "md"/"markdown") use ``user.mention(style="md")``.
 
-        reply_color (:obj:`~pyrogram.types.ChatColor`, *optional*)
+        reply_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
             Chat reply color.
 
-        profile_color (:obj:`~pyrogram.types.ChatColor`, *optional*)
+        profile_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
             Chat profile color.
+
+        raw (:obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.UserStatus`, *optional*):
+            The raw user or user status object, as received from the Telegram API.
     """
 
     def __init__(
@@ -191,6 +197,7 @@ class User(Object, Update):
         is_close_friend: bool = None,
         is_stories_hidden: bool = None,
         is_stories_unavailable: bool = None,
+        is_business_bot: bool = None,
         first_name: str = None,
         last_name: str = None,
         status: "enums.UserStatus" = None,
@@ -205,7 +212,8 @@ class User(Object, Update):
         photo: "types.ChatPhoto" = None,
         restrictions: List["types.Restriction"] = None,
         reply_color: "types.ChatColor" = None,
-        profile_color: "types.ChatColor" = None
+        profile_color: "types.ChatColor" = None,
+        raw: Union["raw.base.User", "raw.base.UserStatus"] = None
     ):
         super().__init__(client)
 
@@ -225,6 +233,7 @@ class User(Object, Update):
         self.is_close_friend = is_close_friend
         self.is_stories_hidden = is_stories_hidden
         self.is_stories_unavailable = is_stories_unavailable
+        self.is_business_bot = is_business_bot
         self.first_name = first_name
         self.last_name = last_name
         self.status = status
@@ -240,6 +249,7 @@ class User(Object, Update):
         self.restrictions = restrictions
         self.reply_color = reply_color
         self.profile_color = profile_color
+        self.raw = raw
 
     @property
     def full_name(self) -> str:
@@ -275,6 +285,7 @@ class User(Object, Update):
             is_close_friend=user.close_friend,
             is_stories_hidden=user.stories_hidden,
             is_stories_unavailable=user.stories_unavailable,
+            is_business_bot=user.bot_business,
             first_name=user.first_name,
             last_name=user.last_name,
             **User._parse_status(user.status, user.bot),
@@ -288,6 +299,7 @@ class User(Object, Update):
             restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason]) or None,
             reply_color=types.ChatColor._parse(getattr(user, "color", None)),
             profile_color=types.ChatColor._parse_profile_color(getattr(user, "profile_color", None)),
+            raw=user,
             client=client
         )
 
@@ -329,6 +341,7 @@ class User(Object, Update):
         return User(
             id=user_status.user_id,
             **User._parse_status(user_status.status),
+            raw=user_status,
             client=client
         )
 
