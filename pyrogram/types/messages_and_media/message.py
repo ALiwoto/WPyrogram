@@ -1217,8 +1217,8 @@ class Message(Object, Update):
     @property
     def link(self) -> str:
         if (
-            self.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL)
-            or self.chat.username
+            (self.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL) and
+                self.chat.username) or self.chat.username
         ):
             return f"https://t.me/{self.chat.username}/{self.id}"
         else:
