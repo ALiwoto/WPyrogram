@@ -30,10 +30,10 @@ class Chat(Object):
     """A chat.
 
     Parameters:
-        id (``int``):
+        id (``int``, *optional*):
             Unique identifier for this chat.
 
-        type (:obj:`~pyrogram.enums.ChatType`):
+        type (:obj:`~pyrogram.enums.ChatType`, *optional*):
             Type of chat.
 
         is_forum (``bool``, *optional*):
@@ -76,6 +76,21 @@ class Chat(Object):
         is_business_bot (``bool``, *optional*):
             True, if this bot can connect to business account.
 
+        is_preview (``bool``, *optional*):
+            True, if this chat is a preview.
+
+        is_banned (``bool``, *optional*):
+            True, if you are banned in this chat.
+
+        is_call_active (``bool``, *optional*):
+            True, if a group call is currently active.
+
+        is_call_not_empty (``bool``, *optional*):
+            True, if there's anyone in the group call.
+
+        is_public (``bool``, *optional*):
+            True, if this chat is public.
+
         title (``str``, *optional*):
             Title, for supergroups, channels and basic group chats.
 
@@ -90,9 +105,6 @@ class Chat(Object):
 
         last_name (``str``, *optional*):
             Last name of the other party in a private chat, for private chats.
-
-        full_name (``str``, *property*):
-            Full name of the other party in a private chat, for private chats and bots.
 
         photo (:obj:`~pyrogram.types.ChatPhoto`, *optional*):
             Chat photo. Suitable for downloads only.
@@ -123,6 +135,12 @@ class Chat(Object):
         has_protected_content (``bool``, *optional*):
             True, if messages from the chat can't be forwarded to other chats.
 
+        has_visible_history (``bool``, *optional*):
+            True, if new chat members will have access to old messages; available only to chat administrators.
+
+        has_aggressive_anti_spam_enabled (``bool``, *optional*):
+            True, if aggressive anti-spam checks are enabled in the supergroup. The field is only available to chat administrators.
+
         invite_link (``str``, *optional*):
             Chat invite link, for groups, supergroups and channels.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
@@ -135,9 +153,18 @@ class Chat(Object):
             For supergroups, name of group sticker set.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
 
+        custom_emoji_sticker_set_name (``str``, *optional*):
+            For supergroups, the name of the group's custom emoji sticker set. Custom emoji from this set can be used by all users and bots in the group.
+
         can_set_sticker_set (``bool``, *optional*):
             True, if the group sticker set can be changed by you.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
+
+        can_send_paid_media (``bool``, *optional*):
+            True, if paid media messages can be sent or forwarded to the channel chat. The field is available only for channel chats.
+
+        members (List of :obj:`~pyrogram.types.User`, *optional*):
+            A few of the participants that are in the group.
 
         members_count (``int``, *optional*):
             Chat members count, for groups, supergroups and channels only.
@@ -192,16 +219,43 @@ class Chat(Object):
         birthday (:obj:`~pyrogram.types.Birthday`, *optional*):
             Information about user birthday.
 
+        message_auto_delete_time (``int``, *optional*):
+            The time after which all messages sent to the chat will be automatically deleted; in seconds.
+
+        unrestrict_boost_count (``int``, *optional*):
+            For supergroups, the minimum number of boosts that a non-administrator user needs to add in order to ignore slow mode and chat permissions.
+
+        slow_mode_delay (``int``, *optional*):
+            For supergroups, the minimum allowed delay between consecutive messages sent by each unpriviledged user; in seconds.
+
+        slowmode_next_send_date (:py:obj:`~datetime.datetime`, *optional*):
+            Indicates when the user will be allowed to send another message in the chat. For supergroups only.
+
+        join_by_request (``bool``, *optional*):
+            True, if all users directly joining the supergroup need to be approved by supergroup administrators.
+
+        join_requests_count (``int``, *optional*):
+            Number of users who requested to join the chat.
+
+        banned_until_date (:py:obj:`~datetime.datetime`, *optional*):
+            Date when the user will be unbanned.
+
+        reactions_limit (``int``, *optional*):
+            This flag may be used to impose a custom limit of unique reactions (i.e. a customizable version of appConfig.reactions_uniq_max).
+
         raw (:obj:`~pyrogram.raw.base.Chat` | :obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.ChatFull` | :obj:`~pyrogram.raw.base.UserFull`, *optional*):
             The raw chat or user object, as received from the Telegram API.
+
+        full_name (``str``, *property*):
+            Full name of the other party in a private chat, for private chats and bots.
     """
 
     def __init__(
         self,
         *,
         client: "pyrogram.Client" = None,
-        id: int,
-        type: "enums.ChatType",
+        id: int = None,
+        type: "enums.ChatType" = None,
         is_forum: bool = None,
         is_verified: bool = None,
         is_members_hidden: bool = None,
@@ -215,6 +269,11 @@ class Chat(Object):
         is_stories_hidden: bool = None,
         is_stories_unavailable: bool = None,
         is_business_bot: bool = None,
+        is_preview: bool = None,
+        is_banned: bool = None,
+        is_call_active: bool = None,
+        is_call_not_empty: bool = None,
+        is_public: bool = None,
         title: str = None,
         username: str = None,
         usernames: List["types.Username"] = None,
@@ -228,10 +287,15 @@ class Chat(Object):
         dc_id: int = None,
         folder_id: int = None,
         has_protected_content: bool = None,
+        has_visible_history: bool = None,
+        has_aggressive_anti_spam_enabled: bool = None,
         invite_link: str = None,
         pinned_message=None,
         sticker_set_name: str = None,
+        custom_emoji_sticker_set_name = None,
         can_set_sticker_set: bool = None,
+        can_send_paid_media: bool = None,
+        members: List["types.User"] = None,
         members_count: int = None,
         restrictions: List["types.Restriction"] = None,
         permissions: "types.ChatPermissions" = None,
@@ -247,6 +311,14 @@ class Chat(Object):
         business_info: "types.BusinessInfo" = None,
         business_intro: "types.BusinessIntro" = None,
         birthday: "types.Birthday" = None,
+        message_auto_delete_time = None,
+        unrestrict_boost_count = None,
+        slow_mode_delay = None,
+        slowmode_next_send_date: datetime = None,
+        join_by_request: bool = None,
+        join_requests_count: int = None,
+        banned_until_date: datetime = None,
+        reactions_limit: int = None,
         raw: Union["raw.base.Chat", "raw.base.User", "raw.base.ChatFull", "raw.base.UserFull"] = None
     ):
         super().__init__(client)
@@ -266,6 +338,11 @@ class Chat(Object):
         self.is_stories_hidden = is_stories_hidden
         self.is_stories_unavailable = is_stories_unavailable
         self.is_business_bot = is_business_bot
+        self.is_preview = is_preview
+        self.is_banned = is_banned
+        self.is_call_active = is_call_active
+        self.is_call_not_empty = is_call_not_empty
+        self.is_public = is_public
         self.title = title
         self.username = username
         self.usernames = usernames
@@ -279,10 +356,15 @@ class Chat(Object):
         self.dc_id = dc_id
         self.folder_id = folder_id
         self.has_protected_content = has_protected_content
+        self.has_visible_history = has_visible_history
+        self.has_aggressive_anti_spam_enabled = has_aggressive_anti_spam_enabled
         self.invite_link = invite_link
         self.pinned_message = pinned_message
         self.sticker_set_name = sticker_set_name
+        self.custom_emoji_sticker_set_name = custom_emoji_sticker_set_name
         self.can_set_sticker_set = can_set_sticker_set
+        self.can_send_paid_media = can_send_paid_media
+        self.members = members
         self.members_count = members_count
         self.restrictions = restrictions
         self.permissions = permissions
@@ -298,6 +380,14 @@ class Chat(Object):
         self.business_info = business_info
         self.business_intro = business_intro
         self.birthday = birthday
+        self.message_auto_delete_time = message_auto_delete_time
+        self.unrestrict_boost_count = unrestrict_boost_count
+        self.slow_mode_delay = slow_mode_delay
+        self.slowmode_next_send_date = slowmode_next_send_date
+        self.join_by_request = join_by_request
+        self.join_requests_count = join_requests_count
+        self.banned_until_date = banned_until_date
+        self.reactions_limit = reactions_limit
         self.raw = raw
 
     @staticmethod
@@ -334,6 +424,16 @@ class Chat(Object):
         usernames = getattr(chat, "usernames", [])
         admin_rights = getattr(chat, "admin_rights", None)
 
+        if isinstance(chat, raw.types.ChatForbidden):
+            return Chat(
+                id=peer_id,
+                type=enums.ChatType.GROUP,
+                title=chat.title,
+                is_banned=True,
+                raw=chat,
+                client=client
+            )
+
         return Chat(
             id=peer_id,
             type=enums.ChatType.GROUP,
@@ -341,6 +441,8 @@ class Chat(Object):
             is_creator=getattr(chat, "creator", None),
             is_admin=True if admin_rights else None,
             is_deactivated=getattr(chat, "deactivated", None),
+            is_call_active=getattr(chat, "call_active", None),
+            is_call_not_empty=getattr(chat, "call_not_empty", None),
             usernames=types.List([types.Username._parse(r) for r in usernames]) or None,
             photo=types.ChatPhoto._parse(client, getattr(chat, "photo", None), peer_id, 0),
             permissions=types.ChatPermissions._parse(getattr(chat, "default_banned_rights", None)),
@@ -358,6 +460,17 @@ class Chat(Object):
         usernames = getattr(channel, "usernames", [])
         admin_rights = getattr(channel, "admin_rights", None)
 
+        if isinstance(channel, raw.types.ChannelForbidden):
+            return Chat(
+                id=peer_id,
+                type=enums.ChatType.SUPERGROUP if getattr(channel, "megagroup", None) else enums.ChatType.CHANNEL,
+                title=channel.title,
+                is_banned=True,
+                banned_until_date=utils.timestamp_to_datetime(getattr(channel, "until_date", None)),
+                raw=channel,
+                client=client,
+            )
+
         return Chat(
             id=peer_id,
             type=enums.ChatType.SUPERGROUP if getattr(channel, "megagroup", None) else enums.ChatType.CHANNEL,
@@ -370,6 +483,8 @@ class Chat(Object):
             is_fake=getattr(channel, "fake", None),
             is_stories_hidden=getattr(channel, "stories_hidden", None),
             is_stories_unavailable=getattr(channel, "stories_unavailable", None),
+            is_call_active=getattr(channel, "call_active", None),
+            is_call_not_empty=getattr(channel, "call_not_empty", None),
             title=channel.title,
             username=getattr(channel, "username", None),
             usernames=types.List([types.Username._parse(r) for r in usernames]) or None,
@@ -459,7 +574,7 @@ class Chat(Object):
             if getattr(full_user, "wallpaper") and isinstance(full_user.wallpaper, raw.types.WallPaper):
                 parsed_chat.wallpaper = types.Document._parse(client, full_user.wallpaper.document, "wallpaper.jpg")
         else:
-            full_chat = chat_full.full_chat
+            full_chat: Union["raw.types.ChatFull", "raw.types.ChannelFull"] = chat_full.full_chat
             chat_raw = chats[full_chat.id]
 
             if isinstance(full_chat, raw.types.ChatFull):
@@ -475,8 +590,15 @@ class Chat(Object):
                 # TODO: Add StickerSet type
                 parsed_chat.can_set_sticker_set = full_chat.can_set_stickers
                 parsed_chat.sticker_set_name = getattr(full_chat.stickerset, "short_name", None)
+                parsed_chat.custom_emoji_sticker_set_name = getattr(full_chat.emojiset, "short_name", None)
                 parsed_chat.is_members_hidden = full_chat.participants_hidden
-                parsed_chat.folder_id = getattr(full_chat, "folder_id", None)
+                parsed_chat.has_visible_history = not getattr(full_chat, "hidden_prehistory", False)
+                parsed_chat.has_aggressive_anti_spam_enabled = getattr(full_chat, "antispam", False)
+                parsed_chat.slow_mode_delay = getattr(full_chat, "slowmode_seconds", None)
+                parsed_chat.slowmode_next_send_date = utils.timestamp_to_datetime(
+                    getattr(full_chat, "slowmode_next_send_date", None)
+                )
+                parsed_chat.can_send_paid_media = getattr(full_chat, "paid_media_allowed", None)
 
                 linked_chat_raw = chats.get(full_chat.linked_chat_id, None)
 
@@ -517,6 +639,12 @@ class Chat(Object):
                 parsed_chat.invite_link = full_chat.exported_invite.link
 
             parsed_chat.available_reactions = types.ChatReactions._parse(client, full_chat.available_reactions)
+            parsed_chat.folder_id = getattr(full_chat, "folder_id", None)
+            parsed_chat.message_auto_delete_time = getattr(full_chat, "ttl_period", None)
+            parsed_chat.unrestrict_boost_count = getattr(full_chat, "boosts_unrestrict", None)
+            parsed_chat.join_requests_count = getattr(full_chat, "requests_pending", None)
+            parsed_chat.reactions_limit = getattr(full_chat, "reactions_limit", None)
+
             parsed_chat.raw = full_chat
 
         return parsed_chat
@@ -529,6 +657,33 @@ class Chat(Object):
             return Chat._parse_user_chat(client, chat)
         else:
             return Chat._parse_channel_chat(client, chat)
+
+    @staticmethod
+    def _parse_preview(client, chat_invite: "raw.types.ChatInvite") -> "Chat":
+        return Chat(
+            type=(
+                enums.ChatType.SUPERGROUP if getattr(chat_invite, "megagroup", None) else
+                enums.ChatType.CHANNEL if getattr(chat_invite, "broadcast", None) else
+                enums.ChatType.GROUP
+            ),
+            is_verified=getattr(chat_invite, "verified", None),
+            is_scam=getattr(chat_invite, "scam", None),
+            is_fake=getattr(chat_invite, "fake", None),
+            is_public=getattr(chat_invite, "public", None),
+            is_preview=True,
+            title=chat_invite.title,
+            photo=types.Photo._parse(client, chat_invite.photo),
+            members_count=chat_invite.participants_count,
+            members=[
+                types.User._parse(client, user)
+                for user in getattr(chat_invite, "participants", [])
+            ] or None,
+            description=getattr(chat_invite, "about", None),
+            join_by_request=getattr(chat_invite, "request_needed", None),
+            profile_color=types.ChatColor._parse(getattr(chat_invite, "color", None)),
+            raw=chat_invite,
+            client=client
+        )
 
     @property
     def full_name(self) -> str:

@@ -139,3 +139,16 @@ Folder
     :hidden:
 
     {folder_toctree}
+
+ActiveSession
+-------------
+
+.. hlist::
+    :columns: 2
+
+    {active_session_hlist}
+
+.. toctree::
+    :hidden:
+
+    {active_session_toctree}

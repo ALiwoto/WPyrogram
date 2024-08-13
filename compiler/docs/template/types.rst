@@ -124,3 +124,16 @@ Authorization
     :hidden:
 
     {authorization}
+
+InputPrivacyRule
+----------------
+
+.. autosummary::
+    :nosignatures:
+
+    {input_privacy_rule}
+
+.. toctree::
+    :hidden:
+
+    {input_privacy_rule}

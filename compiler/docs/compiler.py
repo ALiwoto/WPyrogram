@@ -204,6 +204,8 @@ def pyrogram_api():
             send_web_page
             start_bot
             update_color
+            delete_chat_history
+            send_paid_media
         """,
         chats="""
         Chats
@@ -274,6 +276,7 @@ def pyrogram_api():
             get_chat_photos
             get_chat_photos_count
             set_profile_photo
+            set_personal_channel
             delete_profile_photos
             set_username
             update_profile
@@ -285,7 +288,6 @@ def pyrogram_api():
             update_status
             check_username
             update_birthday
-            update_personal_channel
         """,
         invite_links="""
         Invite Links
@@ -314,10 +316,13 @@ def pyrogram_api():
             import_contacts
             get_contacts
             get_contacts_count
+            search_contacts
         """,
         payments="""
         Payments
             check_gift_code
+            get_payment_form
+            send_payment_form
         """,
         phone="""
         Phone
@@ -333,6 +338,7 @@ def pyrogram_api():
         Bots
             get_inline_bot_results
             send_inline_bot_result
+            send_invoice
             answer_callback_query
             answer_inline_query
             request_callback_answer
@@ -370,6 +376,9 @@ def pyrogram_api():
             recover_password
             accept_terms_of_service
             log_out
+            get_active_sessions
+            reset_session
+            reset_sessions
         """,
         advanced="""
         Advanced
@@ -402,6 +411,13 @@ def pyrogram_api():
             apply_boost
             get_boosts
             get_boosts_status
+        """,
+        account="""
+        Account
+            get_account_ttl
+            set_account_ttl
+            set_privacy
+            get_privacy
         """
     )
 
@@ -454,7 +470,6 @@ def pyrogram_api():
             User
             Username
             Chat
-            ChatPreview
             ChatPhoto
             ChatMember
             ChatPermissions
@@ -472,6 +487,8 @@ def pyrogram_api():
             Folder
             GroupCallMember
             ChatColor
+            FoundContacts
+            PrivacyRule
         """,
         messages_media="""
         Messages & Media
@@ -512,6 +529,9 @@ def pyrogram_api():
             GiftCode
             CheckedGiftCode
             SuccessfulPayment
+            PaidMediaInfo
+            PaidMediaPreview
+            PaymentForm
         """,
         bot_keyboards="""
         Bot keyboards
@@ -536,7 +556,7 @@ def pyrogram_api():
             RequestChatInfo
             RequestUserInfo
             RequestPollInfo
-            PaymentInfo
+            OrderInfo
             PreCheckoutQuery
             ShippingAddress
         """,
@@ -592,8 +612,22 @@ def pyrogram_api():
         """,
         authorization="""
         Authorization
+            ActiveSession
+            ActiveSessions
             SentCode
             TermsOfService
+        """,
+        input_privacy_rule="""
+        InputPrivacyRule
+            InputPrivacyRuleAllowAll
+            InputPrivacyRuleAllowContacts
+            InputPrivacyRuleAllowPremium
+            InputPrivacyRuleAllowUsers
+            InputPrivacyRuleAllowChats
+            InputPrivacyRuleDisallowAll
+            InputPrivacyRuleDisallowContacts
+            InputPrivacyRuleDisallowUsers
+            InputPrivacyRuleDisallowChats
         """
     )
 
@@ -664,6 +698,7 @@ def pyrogram_api():
             Message.react
             Message.read
             Message.view
+            Message.pay
         """,
         chat="""
         Chat
@@ -751,6 +786,10 @@ def pyrogram_api():
             Folder.pin_chat
             Folder.remove_chat
             Folder.export_link
+        """,
+        active_session="""
+        ActiveSession
+            ActiveSession.reset
         """
     )
 

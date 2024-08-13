@@ -39,11 +39,23 @@ class Dialog(Object):
         unread_mentions_count (``int``):
             Amount of unread messages containing a mention in this dialog.
 
+        unread_reactions_count (``int``):
+            Amount of unread messages containing a reaction in this dialog.
+
         unread_mark (``bool``):
             True, if the dialog has the unread mark set.
 
         is_pinned (``bool``):
             True, if the dialog is pinned.
+
+        folder_id (``int``, *optional*):
+            Unique identifier (int) of the folder.
+
+        ttl_period (``int``, *optional*)
+            Time-to-live of all messages sent in this dialog (in seconds).
+
+        raw (:obj:`~pyrogram.raw.types.Dialog`, *optional*):
+            The raw object, as received from the Telegram API.
     """
 
     def __init__(
@@ -54,8 +66,12 @@ class Dialog(Object):
         top_message: "types.Message",
         unread_messages_count: int,
         unread_mentions_count: int,
+        unread_reactions_count: int,
         unread_mark: bool,
-        is_pinned: bool
+        is_pinned: bool,
+        folder_id: int = None,
+        ttl_period: int = None,
+        raw: "raw.types.Dialog" = None
     ):
         super().__init__(client)
 
@@ -63,8 +79,12 @@ class Dialog(Object):
         self.top_message = top_message
         self.unread_messages_count = unread_messages_count
         self.unread_mentions_count = unread_mentions_count
+        self.unread_reactions_count = unread_reactions_count
         self.unread_mark = unread_mark
         self.is_pinned = is_pinned
+        self.folder_id = folder_id
+        self.ttl_period = ttl_period
+        self.raw = raw
 
     @staticmethod
     def _parse(client, dialog: "raw.types.Dialog", messages, users, chats) -> "Dialog":
@@ -73,7 +93,11 @@ class Dialog(Object):
             top_message=messages.get(utils.get_peer_id(dialog.peer)),
             unread_messages_count=dialog.unread_count,
             unread_mentions_count=dialog.unread_mentions_count,
+            unread_reactions_count=dialog.unread_reactions_count,
             unread_mark=dialog.unread_mark,
             is_pinned=dialog.pinned,
+            folder_id=getattr(dialog, "folder_id", None),
+            ttl_period=getattr(dialog, "ttl_period", None),
+            raw=dialog,
             client=client
         )

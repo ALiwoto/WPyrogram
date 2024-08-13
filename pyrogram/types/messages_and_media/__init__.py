@@ -42,6 +42,9 @@ from .message import Message
 from .message_entity import MessageEntity
 from .message_reactions import MessageReactions
 from .my_boost import MyBoost
+from .paid_media_info import PaidMediaInfo
+from .paid_media_preview import PaidMediaPreview
+from .payment_form import PaymentForm
 from .photo import Photo
 from .poll import Poll
 from .poll_option import PollOption
@@ -49,6 +52,7 @@ from .reaction import Reaction
 from .sticker import Sticker
 from .story import Story
 from .stripped_thumbnail import StrippedThumbnail
+from .successful_payment import SuccessfulPayment
 from .thumbnail import Thumbnail
 from .venue import Venue
 from .video import Video
@@ -84,6 +88,9 @@ __all__ = [
     "MessageEntity",
     "MessageReactions",
     "MyBoost",
+    "PaidMediaInfo",
+    "PaidMediaPreview",
+    "PaymentForm",
     "Photo",
     "Poll",
     "PollOption",
@@ -91,6 +98,7 @@ __all__ = [
     "Sticker",
     "Story",
     "StrippedThumbnail",
+    "SuccessfulPayment",
     "Thumbnail",
     "Venue",
     "Video",

@@ -173,8 +173,44 @@ class User(Object, Update):
         profile_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
             Chat profile color.
 
+        added_to_attachment_menu (``bool``, *optional*):
+            True, if this user added the bot to the attachment menu.
+
+        active_users_count (``int``, *optional*):
+            The number of recently (monthly) active users of the bot.
+
+        inline_need_location (``bool``, *optional*):
+            True, if the bot supports inline `user location <https://core.telegram.org/bots/inline#location-based-results>`_ requests. Returned only in get_me.
+
+        inline_query_placeholder (``str``, *optional*):
+            Placeholder for inline queries (displayed on the application input field).
+
+        can_be_edited (``bool``, *optional*):
+            True, if the current user can edit this bot's profile picture.
+
+        can_be_added_to_attachment_menu (``bool``, *optional*):
+            True, if the bot can be added to attachment or side menu.
+
+        can_join_groups (``bool``, *optional*):
+            True, if the bot can be invited to groups. Returned only in get_me.
+
+        can_read_all_group_messages (``bool``, *optional*):
+            True, if privacy mode is disabled for the bot. Returned only in get_me.
+
+        has_main_web_app (``bool``, *optional*):
+            True, if the bot has a main Web App. Returned only in get_me.
+
         raw (:obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.UserStatus`, *optional*):
             The raw user or user status object, as received from the Telegram API.
+
+        mention (``str``, *property*):
+            Generate a text mention for this user.
+            You can use ``user.mention()`` to mention the user using their first name (styled using html), or
+            ``user.mention("another name")`` for a custom name. To choose a different style
+            ("html" or "md"/"markdown") use ``user.mention(style="md")``.
+
+        full_name (``str``, *property*):
+            Full name of the other party in a private chat, for private chats and bots.
     """
 
     def __init__(
@@ -213,6 +249,15 @@ class User(Object, Update):
         restrictions: List["types.Restriction"] = None,
         reply_color: "types.ChatColor" = None,
         profile_color: "types.ChatColor" = None,
+        added_to_attachment_menu: bool = None,
+        active_users_count: int = None,
+        inline_need_location: bool = None,
+        inline_query_placeholder: str = None,
+        can_be_edited: bool = None,
+        can_be_added_to_attachment_menu: bool = None,
+        can_join_groups: bool = None,
+        can_read_all_group_messages: bool = None,
+        has_main_web_app: bool = None,
         raw: Union["raw.base.User", "raw.base.UserStatus"] = None
     ):
         super().__init__(client)
@@ -249,6 +294,15 @@ class User(Object, Update):
         self.restrictions = restrictions
         self.reply_color = reply_color
         self.profile_color = profile_color
+        self.added_to_attachment_menu = added_to_attachment_menu
+        self.active_users_count = active_users_count
+        self.inline_need_location = inline_need_location
+        self.inline_query_placeholder = inline_query_placeholder
+        self.can_be_edited = can_be_edited
+        self.can_be_added_to_attachment_menu = can_be_added_to_attachment_menu
+        self.can_join_groups = can_join_groups
+        self.can_read_all_group_messages = can_read_all_group_messages
+        self.has_main_web_app = has_main_web_app
         self.raw = raw
 
     @property
@@ -299,6 +353,15 @@ class User(Object, Update):
             restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason]) or None,
             reply_color=types.ChatColor._parse(getattr(user, "color", None)),
             profile_color=types.ChatColor._parse_profile_color(getattr(user, "profile_color", None)),
+            added_to_attachment_menu=getattr(user, "attach_menu_enabled", None),
+            active_users_count=getattr(user, "bot_active_users", None),
+            inline_need_location=getattr(user, "bot_inline_geo", None),
+            inline_query_placeholder=getattr(user, "bot_inline_placeholder", None),
+            can_be_edited=getattr(user, "bot_can_edit", None),
+            can_be_added_to_attachment_menu=getattr(user, "bot_attach_menu", None),
+            can_join_groups=getattr(user, "bot_nochats", None),
+            can_read_all_group_messages=getattr(user, "bot_chat_history", None),
+            has_main_web_app=getattr(user, "bot_has_main_app", None),
             raw=user,
             client=client
         )

@@ -16,37 +16,40 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from ..object import Object
 from pyrogram import types
 
+from ..object import Object
 
-class PaymentInfo(Object):
-    """Contains information about a payment.
+
+class PaidMediaPreview(Object):
+    """The paid media isn't available before the payment.
 
     Parameters:
-        name (``str``, *optional*):
-            User's name.
+        width (``int``, *optional*):
+            Media width as defined by the sender.
 
-        phone_number (``str``, *optional*):
-            User's phone number.
+        height (``int``, *optional*):
+            Media height as defined by the sender.
 
-        email (``str``, *optional*):
-            User's email.
+        duration (``int``, *optional*):
+            Duration of the media in seconds as defined by the sender.
 
-        shipping_address (:obj:`~pyrogram.types.ShippingAddress`, *optional*):
-            User's shipping address.
+        thumbnail (:obj:`~pyrogram.types.StrippedThumbnail`, *optional*):
+            Media thumbnail.
+
     """
 
     def __init__(
-        self, *,
-        name: str = None,
-        phone_number: str = None,
-        email: str = None,
-        shipping_address: "types.ShippingAddress" = None
+        self,
+        *,
+        width: int = None,
+        height: int = None,
+        duration: int = None,
+        thumbnail: "types.StrippedThumbnail" = None
     ):
         super().__init__()
 
-        self.name = name
-        self.phone_number = phone_number
-        self.email = email
-        self.shipping_address = shipping_address
+        self.width = width
+        self.height = height
+        self.duration = duration
+        self.thumbnail = thumbnail

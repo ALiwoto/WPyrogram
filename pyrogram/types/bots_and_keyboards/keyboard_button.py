@@ -43,7 +43,7 @@ class KeyboardButton(Object):
         request_poll (:obj:`~pyrogram.types.RequestPollInfo`, *optional*):
             If specified, the poll be sent when the button is pressed.
 
-        request_peer (:obj:`~pyrogram.types.RequestPeerTypeChannelInfo` | :obj:`~pyrogram.types.RequestPeerTypeChatInfo` | :obj:`~pyrogram.types.RequestPeerTypeUserInfo`, *optional*):
+        request_peer (:obj:`~pyrogram.types.RequestChannelInfo` | :obj:`~pyrogram.types.RequestChatInfo` | :obj:`~pyrogram.types.RequestUserInfo`, *optional*):
             If specified, the requested peer will be sent when the button is pressed.
 
         web_app (:obj:`~pyrogram.types.WebAppInfo`, *optional*):

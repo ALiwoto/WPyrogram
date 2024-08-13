@@ -1,4 +1,5 @@
 id	message
+ANONYMOUS_REACTIONS_DISABLED	Sorry, anonymous administrators cannot leave reactions or participate in polls.
 BROADCAST_FORBIDDEN	The request can't be used in channels
 CHANNEL_PUBLIC_GROUP_NA	The channel/supergroup is not available
 CHAT_ADMIN_INVITE_REQUIRED	You don't have rights to invite other users
@@ -6,6 +7,7 @@ CHAT_ADMIN_REQUIRED	The method requires chat admin privileges
 CHAT_FORBIDDEN	You cannot write in this chat
 CHAT_GUEST_SEND_FORBIDDEN	You need to join the discussion group before commenting
 CHAT_SEND_AUDIOS_FORBIDDEN	You can't send audio messages in this chat
+CHAT_SEND_DOCS_FORBIDDEN	You can't send documents in this chat.
 CHAT_SEND_GAME_FORBIDDEN	You can't send a game to this chat
 CHAT_SEND_GIFS_FORBIDDEN	You can't send animations in this chat
 CHAT_SEND_INLINE_FORBIDDEN	You cannot use inline bots to send messages in this chat
@@ -13,6 +15,7 @@ CHAT_SEND_MEDIA_FORBIDDEN	You can't send media messages in this chat
 CHAT_SEND_PHOTOS_FORBIDDEN	You can't send photos in this chat
 CHAT_SEND_PLAIN_FORBIDDEN	You can't send non-media (text) messages in this chat
 CHAT_SEND_POLL_FORBIDDEN	You can't send polls in this chat
+CHAT_SEND_ROUNDVIDEOS_FORBIDDEN	You cannot send video notes in this chat
 CHAT_SEND_STICKERS_FORBIDDEN	You can't send stickers in this chat
 CHAT_SEND_VIDEOS_FORBIDDEN	You can't send videos in this chat
 CHAT_SEND_VOICES_FORBIDDEN	You can't send voice recordings in this chat
@@ -42,3 +45,4 @@ USER_IS_BLOCKED	The user is blocked
 USER_NOT_MUTUAL_CONTACT	The provided user is not a mutual contact
 USER_PRIVACY_RESTRICTED	The user's privacy settings is preventing you to perform this action
 USER_RESTRICTED	You are limited/restricted. You can't perform this action
+VOICE_MESSAGES_FORBIDDEN	This user's privacy settings forbid you from sending voice messages.
