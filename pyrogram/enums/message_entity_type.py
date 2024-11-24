@@ -27,10 +27,10 @@ class MessageEntityType(AutoName):
     "``@username``"
 
     HASHTAG = raw.types.MessageEntityHashtag
-    "``#hashtag``"
+    "``#hashtag`` or ``#hashtag@username``"
 
     CASHTAG = raw.types.MessageEntityCashtag
-    "``$USD``"
+    "``$USD`` or ``$USD@username``"
 
     BOT_COMMAND = raw.types.MessageEntityBotCommand
     "``/start@pyrogrambot``"

@@ -152,7 +152,7 @@ Authorization
     {authorization}
 
 Stories
--------------
+-------
 
 .. autosummary::
     :nosignatures:
@@ -165,7 +165,7 @@ Stories
     {stories}
 
 Premium
--------------
+-------
 
 .. autosummary::
     :nosignatures:

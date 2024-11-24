@@ -19,6 +19,7 @@
 from .business_schedule import BusinessSchedule
 from .chat_action import ChatAction
 from .chat_event_action import ChatEventAction
+from .chat_join_type import ChatJoinType
 from .chat_member_status import ChatMemberStatus
 from .chat_members_filter import ChatMembersFilter
 from .chat_type import ChatType
@@ -30,7 +31,9 @@ from .message_service_type import MessageServiceType
 from .messages_filter import MessagesFilter
 from .next_code_type import NextCodeType
 from .parse_mode import ParseMode
+from .phone_call_discard_reason import PhoneCallDiscardReason
 from .poll_type import PollType
+from .privacy_key import PrivacyKey
 from .profile_color import ProfileColor
 from .reply_color import ReplyColor
 from .sent_code_type import SentCodeType
@@ -41,6 +44,7 @@ __all__ = [
     'BusinessSchedule',
     'ChatAction',
     'ChatEventAction',
+    'ChatJoinType',
     'ChatMemberStatus',
     'ChatMembersFilter',
     'ChatType',
@@ -52,7 +56,9 @@ __all__ = [
     'MessagesFilter',
     'NextCodeType',
     'ParseMode',
+    'PhoneCallDiscardReason',
     'PollType',
+    'PrivacyKey',
     'ProfileColor',
     'ReplyColor',
     'SentCodeType',

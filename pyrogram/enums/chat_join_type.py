@@ -16,29 +16,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .apply_gift_code import ApplyGiftCode
-from .check_gift_code import CheckGiftCode
-from .convert_star_gift import ConvertStarGift
-from .get_payment_form import GetPaymentForm
-from .get_star_gifts import GetStarGifts
-from .get_user_star_gifts_count import GetUserStarGiftsCount
-from .get_user_star_gifts import GetUserStarGifts
-from .hide_star_gift import HideStarGift
-from .send_payment_form import SendPaymentForm
-from .send_star_gift import SendStarGift
-from .show_star_gift import ShowStarGift
+from enum import auto
 
-class Payments(
-    ApplyGiftCode,
-    CheckGiftCode,
-    ConvertStarGift,
-    GetPaymentForm,
-    GetStarGifts,
-    GetUserStarGiftsCount,
-    GetUserStarGifts,
-    HideStarGift,
-    SendPaymentForm,
-    SendStarGift,
-    ShowStarGift
-):
-    pass
+from .auto_name import AutoName
+
+
+class ChatJoinType(AutoName):
+    """How the service message :obj:`~pyrogram.enums.MessageServiceType.NEW_CHAT_MEMBERS` was used for the member to join the chat."""
+
+    BY_ADD = auto()
+    "A new member joined the chat via an invite link"
+
+    BY_LINK = auto()
+    "A new member joined the chat via an invite link"
+
+    BY_REQUEST = auto()
+    "A new member was accepted to the chat by an administrator"

@@ -16,29 +16,21 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .apply_gift_code import ApplyGiftCode
-from .check_gift_code import CheckGiftCode
-from .convert_star_gift import ConvertStarGift
-from .get_payment_form import GetPaymentForm
-from .get_star_gifts import GetStarGifts
-from .get_user_star_gifts_count import GetUserStarGiftsCount
-from .get_user_star_gifts import GetUserStarGifts
-from .hide_star_gift import HideStarGift
-from .send_payment_form import SendPaymentForm
-from .send_star_gift import SendStarGift
-from .show_star_gift import ShowStarGift
+from pyrogram import raw
+from .auto_name import AutoName
 
-class Payments(
-    ApplyGiftCode,
-    CheckGiftCode,
-    ConvertStarGift,
-    GetPaymentForm,
-    GetStarGifts,
-    GetUserStarGiftsCount,
-    GetUserStarGifts,
-    HideStarGift,
-    SendPaymentForm,
-    SendStarGift,
-    ShowStarGift
-):
-    pass
+
+class PhoneCallDiscardReason(AutoName):
+    """Phone call discard reason enumeration used in :obj:`~pyrogram.types.PhoneCallEnded`."""
+
+    BUSY = raw.types.PhoneCallDiscardReasonBusy
+    "Busy"
+
+    DISCONNECT = raw.types.PhoneCallDiscardReasonDisconnect
+    "Disconnect"
+
+    HANGUP = raw.types.PhoneCallDiscardReasonHangup
+    "Hangup"
+
+    MISSED = raw.types.PhoneCallDiscardReasonMissed
+    "Missed"

@@ -78,8 +78,11 @@ class MessageServiceType(AutoName):
     GAME_HIGH_SCORE = auto()
     "Game high score"
 
-    GIVEAWAY_LAUNCH = auto()
-    "Giveaway launch"
+    GIVEAWAY_CREATED = auto()
+    "Giveaway created"
+
+    GIVEAWAY_COMPLETED = auto()
+    "Giveaway completed"
 
     GIFT_CODE = auto()
     "Gift code"
@@ -96,6 +99,12 @@ class MessageServiceType(AutoName):
     VIDEO_CHAT_MEMBERS_INVITED = auto()
     "Video chat members invited"
 
+    PHONE_CALL_STARTED = auto()
+    "Phone call started"
+
+    PHONE_CALL_ENDED = auto()
+    "Phone call ended"
+
     WEB_APP_DATA = auto()
     "Web app data"
 
@@ -105,11 +114,26 @@ class MessageServiceType(AutoName):
     SUCCESSFUL_PAYMENT = auto()
     "Successful payment"
 
+    REFUNDED_PAYMENT = auto()
+    "Refunded payment"
+
     CHAT_TTL_CHANGED = auto()
     "Chat TTL changed"
 
     BOOST_APPLY = auto()
     "Boost apply"
 
-    JOIN_REQUEST_APPROVED = auto()
-    "Join request approved"
+    STAR_GIFT = auto()
+    "Star gift"
+
+    CONNECTED_WEBSITE = auto()
+    "Connected website"
+
+    WRITE_ACCESS_ALLOWED = auto()
+    "Write access allowed"
+
+    SCREENSHOT_TAKEN = auto()
+    "Screenshot taken"
+
+    CONTACT_REGISTERED = auto()
+    "Contact registered"
