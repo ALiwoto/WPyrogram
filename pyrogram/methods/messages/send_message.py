@@ -35,7 +35,7 @@ class SendMessage:
         disable_notification: bool = None,
         message_thread_id: int = None,
         effect_id: int = None,
-        show_above_text: bool = None,
+        show_caption_above_media: bool = None,
         reply_to_message_id: int = None,
         reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
@@ -45,6 +45,7 @@ class SendMessage:
         schedule_date: datetime = None,
         protect_content: bool = None,
         business_connection_id: str = None,
+        allow_paid_broadcast: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -87,9 +88,8 @@ class SendMessage:
                 Unique identifier of the message effect.
                 For private chats only.
 
-            show_above_text (``bool``, *optional*):
-                If True, link preview will be shown above the message text.
-                Otherwise, the link preview will be shown below the message text.
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -117,6 +117,12 @@ class SendMessage:
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -170,7 +176,7 @@ class SendMessage:
                 peer=peer,
                 no_webpage=disable_web_page_preview or None,
                 silent=disable_notification or None,
-                invert_media=show_above_text or None,
+                invert_media=show_caption_above_media or None,
                 reply_to=utils.get_reply_to(
                     reply_to_message_id=reply_to_message_id,
                     message_thread_id=message_thread_id,
@@ -182,6 +188,7 @@ class SendMessage:
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                allow_paid_floodskip=allow_paid_broadcast,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,
                 entities=entities,

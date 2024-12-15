@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from pyrogram import raw
+
 from ..object import Object
 
 
@@ -61,3 +63,19 @@ class ShippingAddress(Object):
         self.street_line1 = street_line1
         self.street_line2 = street_line2
         self.post_code = post_code
+
+    @staticmethod
+    def _parse(
+        shipping_address: "raw.types.PostAddress",
+    ) -> "ShippingAddress":
+        if not shipping_address:
+            return None
+
+        return ShippingAddress(
+            country_code=shipping_address.country_iso2,
+            state=shipping_address.state,
+            city=shipping_address.city,
+            street_line1=shipping_address.street_line1,
+            street_line2=shipping_address.street_line2,
+            post_code=shipping_address.post_code
+        )

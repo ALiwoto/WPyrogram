@@ -91,6 +91,9 @@ class Chat(Object):
         is_public (``bool``, *optional*):
             True, if this chat is public.
 
+        is_paid_reactions_available (``bool``, *optional*):
+            True, if paid reactions enabled in this chat.
+
         title (``str``, *optional*):
             Title, for supergroups, channels and basic group chats.
 
@@ -177,10 +180,6 @@ class Chat(Object):
         permissions (:obj:`~pyrogram.types.ChatPermissions` *optional*):
             Default chat member permissions, for groups and supergroups.
 
-        distance (``int``, *optional*):
-            Distance in meters of this group chat from your location.
-            Returned only in :meth:`~pyrogram.Client.get_nearby_chats`.
-
         personal_channel (:obj:`~pyrogram.types.Chat`, *optional*):
             The personal channel linked to this chat.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
@@ -240,6 +239,9 @@ class Chat(Object):
         banned_until_date (:py:obj:`~datetime.datetime`, *optional*):
             Date when the user will be unbanned.
 
+        subscription_until_date (:py:obj:`~datetime.datetime`, *optional*):
+            Date when the the subscription will end.
+
         reactions_limit (``int``, *optional*):
             This flag may be used to impose a custom limit of unique reactions (i.e. a customizable version of appConfig.reactions_uniq_max).
 
@@ -274,6 +276,7 @@ class Chat(Object):
         is_call_active: bool = None,
         is_call_not_empty: bool = None,
         is_public: bool = None,
+        is_paid_reactions_available: bool = None,
         title: str = None,
         username: str = None,
         usernames: List["types.Username"] = None,
@@ -299,7 +302,6 @@ class Chat(Object):
         members_count: int = None,
         restrictions: List["types.Restriction"] = None,
         permissions: "types.ChatPermissions" = None,
-        distance: int = None,
         personal_channel: "types.Chat" = None,
         personal_channel_message: "types.Message" = None,
         linked_chat: "types.Chat" = None,
@@ -318,6 +320,7 @@ class Chat(Object):
         join_by_request: bool = None,
         join_requests_count: int = None,
         banned_until_date: datetime = None,
+        subscription_until_date: datetime = None,
         reactions_limit: int = None,
         raw: Union["raw.base.Chat", "raw.base.User", "raw.base.ChatFull", "raw.base.UserFull"] = None
     ):
@@ -343,6 +346,7 @@ class Chat(Object):
         self.is_call_active = is_call_active
         self.is_call_not_empty = is_call_not_empty
         self.is_public = is_public
+        self.is_paid_reactions_available = is_paid_reactions_available
         self.title = title
         self.username = username
         self.usernames = usernames
@@ -368,7 +372,6 @@ class Chat(Object):
         self.members_count = members_count
         self.restrictions = restrictions
         self.permissions = permissions
-        self.distance = distance
         self.personal_channel = personal_channel
         self.personal_channel_message = personal_channel_message
         self.linked_chat = linked_chat
@@ -387,6 +390,7 @@ class Chat(Object):
         self.join_by_request = join_by_request
         self.join_requests_count = join_requests_count
         self.banned_until_date = banned_until_date
+        self.subscription_until_date = subscription_until_date
         self.reactions_limit = reactions_limit
         self.raw = raw
 
@@ -498,6 +502,7 @@ class Chat(Object):
             level=getattr(channel, "level", None),
             reply_color=types.ChatColor._parse(getattr(channel, "color", None)),
             profile_color=types.ChatColor._parse(getattr(channel, "profile_color", None)),
+            subscription_until_date=utils.timestamp_to_datetime(getattr(channel, "subscription_until_date", None)),
             raw=channel,
             client=client
         )
@@ -599,6 +604,7 @@ class Chat(Object):
                     getattr(full_chat, "slowmode_next_send_date", None)
                 )
                 parsed_chat.can_send_paid_media = getattr(full_chat, "paid_media_allowed", None)
+                parsed_chat.is_paid_reactions_available = getattr(full_chat, "paid_reactions_available", None)
 
                 linked_chat_raw = chats.get(full_chat.linked_chat_id, None)
 
@@ -625,6 +631,7 @@ class Chat(Object):
                             for story in peer_stories.stories
                         ]
                     ) or None
+
 
                 if full_chat.wallpaper and isinstance(full_chat.wallpaper, raw.types.WallPaper):
                     parsed_chat.wallpaper = types.Document._parse(client, full_chat.wallpaper.document, "wallpaper.jpg")

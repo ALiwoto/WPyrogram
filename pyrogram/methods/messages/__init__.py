@@ -29,6 +29,7 @@ from .edit_message_caption import EditMessageCaption
 from .edit_message_media import EditMessageMedia
 from .edit_message_reply_markup import EditMessageReplyMarkup
 from .edit_message_text import EditMessageText
+from .forward_media_group import ForwardMediaGroup
 from .forward_messages import ForwardMessages
 from .get_available_effects import GetAvailableEffects
 from .get_chat_history import GetChatHistory
@@ -62,6 +63,7 @@ from .send_location import SendLocation
 from .send_media_group import SendMediaGroup
 from .send_message import SendMessage
 from .send_paid_media import SendPaidMedia
+from .send_paid_reaction import SendPaidReaction
 from .send_photo import SendPhoto
 from .send_poll import SendPoll
 from .send_reaction import SendReaction
@@ -84,6 +86,7 @@ class Messages(
     EditMessageReplyMarkup,
     EditMessageMedia,
     EditMessageText,
+    ForwardMediaGroup,
     ForwardMessages,
     GetAvailableEffects,
     GetMediaGroup,
@@ -99,6 +102,7 @@ class Messages(
     SendMediaGroup,
     SendMessage,
     SendPaidMedia,
+    SendPaidReaction,
     SendPhoto,
     SendSticker,
     SendVenue,

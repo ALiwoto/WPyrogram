@@ -55,6 +55,7 @@ class SendInvoice:
         protect_content: Optional[bool] = None,
         message_effect_id: Optional[int] = None,
         reply_to_message_id: Optional[int] = None,
+        allow_paid_broadcast: bool = None,
         reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -152,6 +153,12 @@ class SendInvoice:
             message_effect_id (``int`` ``64-bit``, *optional*):
                 Unique identifier of the message effect to be added to the message; for private chats only.
 
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -216,6 +223,7 @@ class SendInvoice:
             ),
             random_id=self.rnd_id(),
             noforwards=protect_content,
+            allow_paid_floodskip=allow_paid_broadcast,
             reply_markup=await reply_markup.write(self) if reply_markup else None,
             effect=message_effect_id,
             **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)

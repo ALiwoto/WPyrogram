@@ -121,9 +121,6 @@ class User(Object, Update):
         last_name (``str``, *optional*):
             User's or bot's last name.
 
-        full_name (``str``, *property*):
-            Full name of the other party in a private chat, for private chats and bots.
-
         status (:obj:`~pyrogram.enums.UserStatus`, *optional*):
             User's last seen & online status. ``None``, for bots.
 
@@ -160,12 +157,6 @@ class User(Object, Update):
         restrictions (List of :obj:`~pyrogram.types.Restriction`, *optional*):
             The list of reasons why this bot might be unavailable to some users.
             This field is available only in case *is_restricted* is True.
-
-        mention (``str``, *property*):
-            Generate a text mention for this user.
-            You can use ``user.mention()`` to mention the user using their first name (styled using html), or
-            ``user.mention("another name")`` for a custom name. To choose a different style
-            ("html" or "md"/"markdown") use ``user.mention(style="md")``.
 
         reply_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
             Chat reply color.
@@ -406,19 +397,6 @@ class User(Object, Update):
             **User._parse_status(user_status.status),
             raw=user_status,
             client=client
-        )
-
-    def listen(self, *args, **kwargs):
-        return self._client.listen((None, self.id, None), *args, **kwargs)
-
-    def ask(self, text, *args, **kwargs):
-        return self._client.ask(
-            text, (self.id, self.id, None), *args, **kwargs
-        )
-
-    def stop_listening(self, *args, **kwargs):
-        return self._client.stop_listening(
-            *args, identifier_pattern=(None, self.id, None), **kwargs
         )
 
     async def archive(self):

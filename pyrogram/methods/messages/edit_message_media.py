@@ -35,15 +35,19 @@ class EditMessageMedia:
         chat_id: Union[int, str],
         message_id: int,
         media: "types.InputMedia",
-        show_above_text: bool = None,
+        show_caption_above_media: bool = None,
         schedule_date: datetime = None,
         reply_markup: "types.InlineKeyboardMarkup" = None,
         file_name: str = None
     ) -> "types.Message":
-        """Edit animation, audio, document, photo or video messages.
+        """Edit animation, audio, document, photo or video messages, or to add media to text messages.
 
-        If a message is a part of a message album, then it can be edited only to a photo or a video. Otherwise, the
-        message type can be changed arbitrarily.
+        If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo or a video otherwise.
+        Otherwise, the message type can be changed arbitrarily.
+
+        .. note::
+
+           Business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -59,9 +63,8 @@ class EditMessageMedia:
             media (:obj:`~pyrogram.types.InputMedia`):
                 One of the InputMedia objects describing an animation, audio, document, photo or video.
 
-            show_above_text (``bool``, *optional*):
-                If True, link preview will be shown above the message text.
-                Otherwise, the link preview will be shown below the message text.
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -95,11 +98,12 @@ class EditMessageMedia:
         """
         caption = media.caption
         parse_mode = media.parse_mode
+        caption_entities = media.caption_entities
 
         message, entities = None, None
 
         if caption is not None:
-            message, entities = (await self.parser.parse(caption, parse_mode)).values()
+            message, entities = (await utils.parse_text_entities(self, caption, parse_mode, caption_entities)).values()
 
         if isinstance(media, types.InputMediaPhoto):
             if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
@@ -281,7 +285,7 @@ class EditMessageMedia:
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
-                invert_media=show_above_text,
+                invert_media=show_caption_above_media,
                 media=media,
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,

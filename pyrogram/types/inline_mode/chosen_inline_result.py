@@ -16,12 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from base64 import b64encode
-from struct import pack
-
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
+from pyrogram import utils
 from ..object import Object
 from ..update import Update
 
@@ -73,19 +71,6 @@ class ChosenInlineResult(Object, Update):
 
     @staticmethod
     def _parse(client, chosen_inline_result: raw.types.UpdateBotInlineSend, users) -> "ChosenInlineResult":
-        inline_message_id = None
-
-        if isinstance(chosen_inline_result.msg_id, raw.types.InputBotInlineMessageID):
-            inline_message_id = b64encode(
-                pack(
-                    "<iqq",
-                    chosen_inline_result.msg_id.dc_id,
-                    chosen_inline_result.msg_id.id,
-                    chosen_inline_result.msg_id.access_hash
-                ),
-                b"-_"
-            ).decode().rstrip("=")
-
         return ChosenInlineResult(
             result_id=str(chosen_inline_result.id),
             from_user=types.User._parse(client, users[chosen_inline_result.user_id]),
@@ -95,5 +80,7 @@ class ChosenInlineResult(Object, Update):
                 latitude=chosen_inline_result.geo.lat,
                 client=client
             ) if chosen_inline_result.geo else None,
-            inline_message_id=inline_message_id
+            inline_message_id=utils.pack_inline_message_id(
+                chosen_inline_result.msg_id
+            ) if getattr(chosen_inline_result, "msg_id", None) else None
         )

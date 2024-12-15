@@ -43,6 +43,12 @@ class ChatPhoto(Object):
         big_photo_unique_id (``str``):
             Unique file identifier of big (640x640) chat photo, which is supposed to be the same over time and for
             different accounts. Can't be used to download or reuse the file.
+
+        has_animation (``bool``):
+            True, if animated profile picture is available for this user.
+
+        is_personal (``bool``):
+            True, if the photo is visible only for the current user.
     """
 
     def __init__(
@@ -52,8 +58,9 @@ class ChatPhoto(Object):
         small_file_id: str,
         small_photo_unique_id: str,
         big_file_id: str,
-        big_photo_unique_id: str
-
+        big_photo_unique_id: str,
+        has_animation: bool,
+        is_personal: bool
     ):
         super().__init__(client)
 
@@ -61,6 +68,8 @@ class ChatPhoto(Object):
         self.small_photo_unique_id = small_photo_unique_id
         self.big_file_id = big_file_id
         self.big_photo_unique_id = big_photo_unique_id
+        self.has_animation = has_animation
+        self.is_personal = is_personal
 
     @staticmethod
     def _parse(
@@ -103,5 +112,7 @@ class ChatPhoto(Object):
                 file_unique_type=FileUniqueType.DOCUMENT,
                 media_id=chat_photo.photo_id
             ).encode(),
+            has_animation=chat_photo.has_video,
+            is_personal=getattr(chat_photo, "personal", False),
             client=client
         )

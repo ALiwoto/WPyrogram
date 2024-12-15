@@ -31,22 +31,7 @@ from typing import Union, List, Dict, Optional
 import pyrogram
 from pyrogram import raw, enums
 from pyrogram import types
-from pyrogram.errors import AuthBytesInvalid
 from pyrogram.file_id import FileId, FileType, PHOTO_TYPES, DOCUMENT_TYPES
-from pyrogram.session import Session
-from pyrogram.session.auth import Auth
-
-
-
-
-class PyromodConfig:
-    timeout_handler = None
-    stopped_handler = None
-    throw_exceptions = True
-    unallowed_click_alert = True
-    unallowed_click_alert_text = (
-        "[pyromod] You're not expected to click this button."
-    )
 
 
 async def ainput(prompt: str = "", *, hide: bool = False):

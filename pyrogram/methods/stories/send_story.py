@@ -48,11 +48,9 @@ class SendStory:
         progress: Callable = None,
         progress_args: tuple = ()
     ) -> "types.Story":
-        """Send new story.
+        """Post new story.
 
         .. include:: /_includes/usable-by/users.rst
-
-        Note: You must pass one of following parameters *animation*, *photo*, *video*
 
         Parameters:
             chat_id (``int`` | ``str``):

@@ -27,6 +27,10 @@ class SetAccountTTL:
     ):
         """Set days to live of account.
 
+        .. note::
+
+            Days should be in range 30-730
+
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
@@ -39,7 +43,7 @@ class SetAccountTTL:
         Example:
             .. code-block:: python
 
-                # Set ttl in days
+                # Set account ttl to 1 year
                 await app.set_account_ttl(365)
         """
         r = await self.invoke(

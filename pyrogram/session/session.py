@@ -23,6 +23,7 @@ import datetime
 import os
 from hashlib import sha1
 from io import BytesIO
+from typing import Optional
 
 import pyrogram
 from pyrogram import raw
@@ -30,7 +31,7 @@ from pyrogram.connection import Connection
 from pyrogram.crypto import mtproto
 from pyrogram.errors import (
     RPCError, InternalServerError, AuthKeyDuplicated, FloodWait, FloodPremiumWait, ServiceUnavailable, BadMsgNotification,
-    SecurityCheckMismatch
+    SecurityCheckMismatch, Unauthorized
 )
 from pyrogram.raw.all import layer
 from pyrogram.raw.core import TLObject, MsgContainer, Int, FutureSalts
@@ -82,7 +83,7 @@ class Session:
         self.is_cdn = is_cdn
         self.auto_restart_on_fail = auto_restart_on_fail
 
-        self.connection = None
+        self.connection: Optional[Connection] = None
 
         self.auth_key_id = sha1(auth_key).digest()[-8:]
 
@@ -108,12 +109,13 @@ class Session:
 
     async def start(self):
         while True:
-            self.connection = Connection(
-                self.dc_id,
-                self.test_mode,
-                self.client.ipv6,
-                self.client.proxy,
-                self.is_media
+            self.connection = self.client.connection_factory(
+                dc_id=self.dc_id,
+                test_mode=self.test_mode,
+                ipv6=self.client.ipv6,
+                proxy=self.client.proxy,
+                media=self.is_media,
+                protocol_factory=self.client.protocol_factory
             )
 
             try:
@@ -147,7 +149,7 @@ class Session:
                 log.info("Session initialized: Layer %s", layer)
                 log.info("Device: %s - %s", self.client.device_model, self.client.app_version)
                 log.info("System: %s (%s)", self.client.system_version, self.client.lang_code)
-            except AuthKeyDuplicated as e:
+            except (AuthKeyDuplicated, Unauthorized) as e:
                 await self.stop()
                 raise e
             except (OSError, RPCError):
@@ -192,14 +194,21 @@ class Session:
         await self.start()
 
     async def handle_packet(self, packet):
-        data = await self.loop.run_in_executor(
-            pyrogram.crypto_executor,
-            mtproto.unpack,
-            BytesIO(packet),
-            self.session_id,
-            self.auth_key,
-            self.auth_key_id
-        )
+        try:
+            data = await self.loop.run_in_executor(
+                pyrogram.crypto_executor,
+                mtproto.unpack,
+                BytesIO(packet),
+                self.session_id,
+                self.auth_key,
+                self.auth_key_id
+            )
+        except ValueError as e:
+            if self.auto_restart_on_fail:
+                log.debug(e)
+                self.loop.create_task(self.restart())
+                return
+            raise e
 
         messages = (
             data.body.messages
@@ -314,9 +323,9 @@ class Session:
                     error_code = -Int.read(BytesIO(packet))
 
                     if error_code == 404:
-                        raise Exception(
-                            "Auth key not found in the system. You must delete your session file"
-                            "and log in again with your phone number or bot token"
+                        raise Unauthorized(
+                            "Auth key not found in the system. You must delete your session file "
+                            "and log in again with your phone number or bot token."
                         )
 
                     log.warning(

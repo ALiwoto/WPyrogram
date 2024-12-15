@@ -43,6 +43,9 @@ class Video(Object):
         height (``int``):
             Video height as defined by sender.
 
+        codec (``str``):
+            Codec used for video file encoding, for example, "h264", "h265", or "av1".
+
         duration (``int``):
             Duration of the video in seconds as defined by sender.
 
@@ -76,6 +79,7 @@ class Video(Object):
         file_unique_id: str,
         width: int,
         height: int,
+        codec: str,
         duration: int,
         file_name: str = None,
         mime_type: str = None,
@@ -91,6 +95,7 @@ class Video(Object):
         self.file_unique_id = file_unique_id
         self.width = width
         self.height = height
+        self.codec = codec
         self.duration = duration
         self.file_name = file_name
         self.mime_type = mime_type
@@ -120,8 +125,9 @@ class Video(Object):
                 file_unique_type=FileUniqueType.DOCUMENT,
                 media_id=video.id
             ).encode(),
-            width=video_attributes.w,
-            height=video_attributes.h,
+            width=getattr(video_attributes, "w", None),
+            height=getattr(video_attributes, "h", None),
+            codec=getattr(video_attributes, "video_codec", None),
             duration=video_attributes.duration,
             file_name=file_name,
             mime_type=video.mime_type,

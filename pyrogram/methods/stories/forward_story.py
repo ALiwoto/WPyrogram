@@ -34,7 +34,7 @@ class ForwardStory:
         message_thread_id: int = None,
         schedule_date: datetime = None,
     ) -> Optional["types.Message"]:
-        """Send story.
+        """Forward story.
 
         .. include:: /_includes/usable-by/users.rst
 

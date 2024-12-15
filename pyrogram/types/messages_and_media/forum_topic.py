@@ -117,6 +117,9 @@ class ForumTopic(Object):
 
     @staticmethod
     def _parse(client: "pyrogram.Client", forum_topic: "raw.types.ForumTopic", messages: dict = {},  users: dict = {}, chats: dict = {}) -> "ForumTopic":
+        if not forum_topic:
+            return None
+
         if isinstance(forum_topic, raw.types.ForumTopicDeleted):
             return ForumTopic(id=forum_topic.id, is_deleted=True)
 

@@ -90,7 +90,7 @@ class GetForumTopicsByID:
                     replies=0,
                     from_topic=True if len(topics_list) != 1 else topics_list[topic_ids[0]]
                 )
-            except: pass
+            except: pass  # noqa: E701, E722
 
         for current in topics.values():
             topics_list.append(types.ForumTopic._parse(
@@ -101,4 +101,4 @@ class GetForumTopicsByID:
                 chats=chats
             ))
 
-        return topics_list if is_iterable else topics_list[0] if topics_list else None
+        return topics if is_iterable else topics[0] if topics else None

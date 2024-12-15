@@ -55,8 +55,9 @@ class SendMediaGroup:
         quote_offset: int = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
-        show_above_text: bool = None,
-        business_connection_id: str = None
+        show_caption_above_media: bool = None,
+        business_connection_id: str = None,
+        allow_paid_broadcast: bool = None
     ) -> List["types.Message"]:
         """Send a group of photos or videos as an album.
 
@@ -111,12 +112,17 @@ class SendMediaGroup:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
-            show_above_text (``bool``, *optional*):
-                If True, link preview will be shown above the message text.
-                Otherwise, the link preview will be shown below the message text.
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
 
         Returns:
             List of :obj:`~pyrogram.types.Message`: On success, a list of the sent messages is returned.
@@ -213,7 +219,7 @@ class SendMediaGroup:
                                     thumb=await self.save_file(i.thumb),
                                     spoiler=i.has_spoiler,
                                     mime_type=self.guess_mime_type(i.media) or "video/mp4",
-                                    nosound_video=True, # no-sounds videos cannot be sent in a media group
+                                    nosound_video=True,
                                     attributes=[
                                         raw.types.DocumentAttributeVideo(
                                             supports_streaming=i.supports_streaming or None,
@@ -221,7 +227,7 @@ class SendMediaGroup:
                                             w=i.width,
                                             h=i.height
                                         ),
-                                        raw.types.DocumentAttributeFilename(file_name=os.path.basename(i.media))
+                                        raw.types.DocumentAttributeFilename(file_name=i.file_name or os.path.basename(i.media))
                                     ]
                                 ),
                                 business_connection_id=business_connection_id
@@ -267,7 +273,7 @@ class SendMediaGroup:
                                 thumb=await self.save_file(i.thumb),
                                 spoiler=i.has_spoiler,
                                 mime_type=self.guess_mime_type(getattr(i.media, "name", "video.mp4")) or "video/mp4",
-                                nosound_video=True, # no-sounds videos cannot be sent in a media group
+                                nosound_video=True,
                                 attributes=[
                                     raw.types.DocumentAttributeVideo(
                                         supports_streaming=i.supports_streaming or None,
@@ -275,7 +281,7 @@ class SendMediaGroup:
                                         w=i.width,
                                         h=i.height
                                     ),
-                                    raw.types.DocumentAttributeFilename(file_name=getattr(i.media, "name", "video.mp4"))
+                                    raw.types.DocumentAttributeFilename(file_name=i.file_name or getattr(i.media, "name", "video.mp4"))
                                 ]
                             ),
                             business_connection_id=business_connection_id
@@ -306,7 +312,7 @@ class SendMediaGroup:
                                             performer=i.performer,
                                             title=i.title
                                         ),
-                                        raw.types.DocumentAttributeFilename(file_name=os.path.basename(i.media))
+                                        raw.types.DocumentAttributeFilename(file_name=i.file_name or os.path.basename(i.media))
                                     ]
                                 ),
                                 business_connection_id=business_connection_id
@@ -354,7 +360,7 @@ class SendMediaGroup:
                                         performer=i.performer,
                                         title=i.title
                                     ),
-                                    raw.types.DocumentAttributeFilename(file_name=getattr(i.media, "name", "audio.mp3"))
+                                    raw.types.DocumentAttributeFilename(file_name=i.file_name or getattr(i.media, "name", "audio.mp3"))
                                 ]
                             ),
                             business_connection_id=business_connection_id
@@ -379,7 +385,7 @@ class SendMediaGroup:
                                     file=await self.save_file(i.media),
                                     thumb=await self.save_file(i.thumb),
                                     attributes=[
-                                        raw.types.DocumentAttributeFilename(file_name=os.path.basename(i.media))
+                                        raw.types.DocumentAttributeFilename(file_name=i.file_name or os.path.basename(i.media))
                                     ]
                                 ),
                                 business_connection_id=business_connection_id
@@ -424,7 +430,7 @@ class SendMediaGroup:
                                 file=await self.save_file(i.media),
                                 thumb=await self.save_file(i.thumb),
                                 attributes=[
-                                    raw.types.DocumentAttributeFilename(file_name=getattr(i.media, "name", "file.zip"))
+                                    raw.types.DocumentAttributeFilename(file_name=i.file_name or getattr(i.media, "name", "file.zip"))
                                 ]
                             ),
                             business_connection_id=business_connection_id
@@ -445,7 +451,7 @@ class SendMediaGroup:
                 raw.types.InputSingleMedia(
                     media=media,
                     random_id=self.rnd_id(),
-                    **await self.parser.parse(i.caption, i.parse_mode)
+                    **await utils.parse_text_entities(self, i.caption, i.parse_mode, i.caption_entities)
                 )
             )
 
@@ -468,7 +474,8 @@ class SendMediaGroup:
                 ),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
-                invert_media=show_above_text,
+                invert_media=show_caption_above_media,
+                allow_paid_floodskip=allow_paid_broadcast,
                 effect=effect_id,
             ),
             sleep_threshold=60,
@@ -477,9 +484,10 @@ class SendMediaGroup:
 
         conn_id = None
 
-        for i in r.updates:
-            if getattr(i, "connection_id", None):
-                conn_id = i.connection_id
+        for u in r.updates:
+            if getattr(u, "connection_id", None):
+                conn_id = u.connection_id
+                break
 
 
         return await utils.parse_messages(

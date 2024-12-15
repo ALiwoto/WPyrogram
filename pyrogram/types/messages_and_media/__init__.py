@@ -21,7 +21,9 @@ from .audio import Audio
 from .available_effect import AvailableEffect
 from .boosts_status import BoostsStatus
 from .business_message import BusinessMessage
+from .chat_boost import ChatBoost
 from .checked_gift_code import CheckedGiftCode
+from .contact_registered import ContactRegistered
 from .contact import Contact
 from .dice import Dice
 from .document import Document
@@ -36,7 +38,9 @@ from .general_forum_topic_unhidden import GeneralTopicUnhidden
 from .gift_code import GiftCode
 from .invoice import Invoice
 from .giveaway import Giveaway
-from .giveaway_result import GiveawayResult
+from .giveaway_completed import GiveawayCompleted
+from .giveaway_created import GiveawayCreated
+from .giveaway_winners import GiveawayWinners
 from .location import Location
 from .message import Message
 from .message_entity import MessageEntity
@@ -49,6 +53,9 @@ from .photo import Photo
 from .poll import Poll
 from .poll_option import PollOption
 from .reaction import Reaction
+from .refunded_payment import RefundedPayment
+from .screenshot_taken import ScreenshotTaken
+from .star_gift import StarGift
 from .sticker import Sticker
 from .story import Story
 from .stripped_thumbnail import StrippedThumbnail
@@ -60,6 +67,7 @@ from .video_note import VideoNote
 from .voice import Voice
 from .web_app_data import WebAppData
 from .web_page import WebPage
+from .write_access_allowed import WriteAccessAllowed
 
 __all__ = [
     "Animation",
@@ -67,7 +75,9 @@ __all__ = [
     "AvailableEffect",
     "BoostsStatus",
     "BusinessMessage",
+    "ChatBoost",
     "CheckedGiftCode",
+    "ContactRegistered",
     "Contact",
     "Dice",
     "Document",
@@ -82,7 +92,9 @@ __all__ = [
     "GiftCode",
     "Giveaway",
     "Invoice",
-    "GiveawayResult",
+    "GiveawayCompleted",
+    "GiveawayCreated",
+    "GiveawayWinners",
     "Location",
     "Message",
     "MessageEntity",
@@ -95,6 +107,9 @@ __all__ = [
     "Poll",
     "PollOption",
     "Reaction",
+    "RefundedPayment",
+    "ScreenshotTaken",
+    "StarGift",
     "Sticker",
     "Story",
     "StrippedThumbnail",
@@ -106,4 +121,5 @@ __all__ = [
     "Voice",
     "WebAppData",
     "WebPage",
+    "WriteAccessAllowed",
 ]

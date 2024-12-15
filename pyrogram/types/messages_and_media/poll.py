@@ -77,6 +77,9 @@ class Poll(Object, Update):
 
         close_date (:py:obj:`~datetime.datetime`, *optional*):
             Point in time when the poll will be automatically closed.
+
+        voter (:obj:`~pyrogram.types.User`, *optional*):
+            The user that voted in the poll.
     """
 
     def __init__(
@@ -97,7 +100,8 @@ class Poll(Object, Update):
         explanation: Optional[str] = None,
         explanation_entities: Optional[List["types.MessageEntity"]] = None,
         open_period: Optional[int] = None,
-        close_date: Optional[datetime] = None
+        close_date: Optional[datetime] = None,
+        voter: Optional["types.User"] = None
     ):
         super().__init__(client)
 
@@ -116,6 +120,7 @@ class Poll(Object, Update):
         self.explanation_entities = explanation_entities
         self.open_period = open_period
         self.close_date = close_date
+        self.voter = voter
 
     @staticmethod
     def _parse(client, media_poll: Union["raw.types.MessageMediaPoll", "raw.types.UpdateMessagePoll"]) -> "Poll":
@@ -195,38 +200,57 @@ class Poll(Object, Update):
         )
 
     @staticmethod
-    def _parse_update(client, update: "raw.types.UpdateMessagePoll"):
-        if update.poll is not None:
-            return Poll._parse(client, update)
+    def _parse_update(client, update: Union["raw.types.UpdateMessagePoll", "raw.types.UpdateMessagePollVote"], users: dict):
+        if isinstance(update, raw.types.UpdateMessagePoll):
+            if update.poll is not None:
+                return Poll._parse(client, update)
 
-        results = update.results.results
-        chosen_option_id = None
-        correct_option_id = None
-        options = []
+            results = update.results.results
+            chosen_option_id = None
+            correct_option_id = None
+            options = []
 
-        for i, result in enumerate(results):
-            if result.chosen:
-                chosen_option_id = i
+            for i, result in enumerate(results):
+                if result.chosen:
+                    chosen_option_id = i
 
-            if result.correct:
-                correct_option_id = i
+                if result.correct:
+                    correct_option_id = i
 
-            options.append(
-                types.PollOption(
-                    text="",
-                    voter_count=result.voters,
-                    data=result.option,
-                    client=client
+                options.append(
+                    types.PollOption(
+                        text="",
+                        voter_count=result.voters,
+                        data=result.option,
+                        client=client
+                    )
                 )
+
+            return Poll(
+                id=str(update.poll_id),
+                question="",
+                options=options,
+                total_voter_count=update.results.total_voters,
+                is_closed=False,
+                chosen_option_id=chosen_option_id,
+                correct_option_id=correct_option_id,
+                client=client
             )
 
-        return Poll(
-            id=str(update.poll_id),
-            question="",
-            options=options,
-            total_voter_count=update.results.total_voters,
-            is_closed=False,
-            chosen_option_id=chosen_option_id,
-            correct_option_id=correct_option_id,
-            client=client
-        )
+        if isinstance(update, raw.types.UpdateMessagePollVote):
+            return Poll(
+                id=str(update.poll_id),
+                question="",
+                options=[
+                    types.PollOption(
+                        text="",
+                        voter_count=None,
+                        data=option,
+                        client=client
+                    ) for option in update.options
+                ],
+                total_voter_count=None,
+                is_closed=False,
+                voter=types.User._parse(client, users[update.peer.user_id]),
+                client=client
+            )

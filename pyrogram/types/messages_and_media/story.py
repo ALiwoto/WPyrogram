@@ -350,7 +350,7 @@ class Story(Object, Update):
         )
 
     @property
-    def link(self) -> str:
+    def link(self) -> Optional[str]:
         if not self.chat.username:
             return None
 
@@ -433,6 +433,8 @@ class Story(Object, Update):
             reply_markup=reply_markup
         )
 
+    reply = reply_text
+
     async def reply_animation(
         self,
         animation: Union[str, BinaryIO],
@@ -454,7 +456,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_animation* :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -588,7 +590,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_audio* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -711,7 +713,7 @@ class Story(Object, Update):
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
         ] = None
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_cached_media* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -838,7 +840,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_photo* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -951,7 +953,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_sticker* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1051,7 +1053,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_video* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1196,7 +1198,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_video_note* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1306,7 +1308,7 @@ class Story(Object, Update):
         ] = None,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_voice* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1675,7 +1677,7 @@ class Story(Object, Update):
         Parameters:
             emoji (``int`` | ``str``, *optional*):
                 Reaction emoji.
-                Pass "" as emoji (default) to retract the reaction.
+                Pass None as emoji (default) to retract the reaction.
 
         Returns:
             ``bool``: On success, True is returned.
@@ -1695,7 +1697,7 @@ class Story(Object, Update):
         message_thread_id: int = None,
         disable_notification: bool = None,
         schedule_date: datetime = None
-    ) -> Union["types.Message", List["types.Message"]]:
+    ) -> Optional["types.Message"]:
         """Bound method *forward* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1752,7 +1754,7 @@ class Story(Object, Update):
         block: bool = True,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> str:
+    ) -> Optional[Union[str, BinaryIO]]:
         """Bound method *download* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1823,6 +1825,15 @@ class Story(Object, Update):
     async def read(self) -> List[int]:
         """Bound method *read* of :obj:`~pyrogram.types.Story`.
 
+        Use as a shortcut for:
+
+        .. code-block:: python
+
+            await client.read_chat_stories(
+                chat_id=chat_id,
+                max_id=story_id
+            )
+
         Example:
             .. code-block:: python
 
@@ -1830,20 +1841,23 @@ class Story(Object, Update):
 
         Returns:
             List of ``int``: On success, a list of read stories is returned.
-
-        Example:
-            .. code-block:: python
-
-                # Read stories
-                await app.read_stories(chat_id)
         """
-        return await self._client.read_stories(
+        return await self._client.read_chat_stories(
             chat_id=self.chat.id,
             max_id=self.id
         )
 
-    async def view(self) -> List[int]:
+    async def view(self) -> bool:
         """Bound method *view* of :obj:`~pyrogram.types.Story`.
+
+        Use as a shortcut for:
+
+        .. code-block:: python
+
+            await client.view_stories(
+                chat_id=chat_id,
+                story_id=story_id
+            )
 
         Example:
             .. code-block:: python
@@ -1852,12 +1866,6 @@ class Story(Object, Update):
 
         Returns:
             True on success, False otherwise.
-
-        Example:
-            .. code-block:: python
-
-                # Read stories
-                await app.view_stories(chat_id)
         """
         return await self._client.view_stories(
             chat_id=self.chat.id,

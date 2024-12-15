@@ -70,6 +70,9 @@ class ChatMember(Object):
 
         privileges (:obj:`~pyrogram.types.ChatPrivileges`, *optional*):
             Administrators only. Privileged actions that an administrator is able to take.
+
+        subscription_until_date (:py:obj:`~datetime.datetime`, *optional*):
+            Date when the the subscription will end.
     """
 
     def __init__(
@@ -88,7 +91,8 @@ class ChatMember(Object):
         is_member: bool = None,
         can_be_edited: bool = None,
         permissions: "types.ChatPermissions" = None,
-        privileges: "types.ChatPrivileges" = None
+        privileges: "types.ChatPrivileges" = None,
+        subscription_until_date: datetime = None
     ):
         super().__init__(client)
 
@@ -105,6 +109,7 @@ class ChatMember(Object):
         self.can_be_edited = can_be_edited
         self.permissions = permissions
         self.privileges = privileges
+        self.subscription_until_date = subscription_until_date
 
     @staticmethod
     def _parse(
@@ -143,6 +148,7 @@ class ChatMember(Object):
                 status=enums.ChatMemberStatus.MEMBER,
                 user=types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
+                subscription_until_date=utils.timestamp_to_datetime(getattr(member, "subscription_until_date", None)),
                 client=client
             )
         elif isinstance(member, raw.types.ChannelParticipantAdmin):
@@ -223,5 +229,6 @@ class ChatMember(Object):
                 user=types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
                 invited_by=types.User._parse(client, users[member.inviter_id]),
+                subscription_until_date=utils.timestamp_to_datetime(getattr(member, "subscription_until_date", None)),
                 client=client
             )

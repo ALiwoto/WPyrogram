@@ -55,6 +55,9 @@ class Giveaway(Object):
 
         winners_are_visible (``bool``, *optional*):
             True, if this giveaway winners is visible.
+
+        stars (``int``, *optional*):
+            Stars amount.
     """
 
     def __init__(
@@ -68,7 +71,8 @@ class Giveaway(Object):
         description: str = None,
         only_new_subscribers: bool = None,
         only_for_countries: List[str] = None,
-        winners_are_visible: bool = None
+        winners_are_visible: bool = None,
+        stars: int = None
     ):
         super().__init__(client)
 
@@ -80,6 +84,7 @@ class Giveaway(Object):
         self.only_new_subscribers = only_new_subscribers
         self.only_for_countries = only_for_countries
         self.winners_are_visible = winners_are_visible
+        self.stars = stars
 
     @staticmethod
     def _parse(
@@ -96,5 +101,6 @@ class Giveaway(Object):
             only_new_subscribers=getattr(giveaway, "only_new_subscribers", None),
             only_for_countries=types.List(getattr(giveaway, "countries_iso2", [])) or None,
             winners_are_visible=getattr(giveaway, "winners_are_visible", None),
+            stars=getattr(giveaway, "stars", None),
             client=client
         )

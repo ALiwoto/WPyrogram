@@ -41,7 +41,7 @@ class PreCheckoutQuery(Object, Update):
             Total price in the smallest units of the currency (integer, **not** float/double). For example, for a price of ``US$ 1.45`` pass ``amount = 145``. See the __exp__ parameter in `currencies.json <https://core.telegram.org/bots/payments/currencies.json>`_, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
 
         invoice_payload (``str``):
-            Bot specified invoice payload.
+            Bot-defined invoice payload, 1-128 bytes. This will not be displayed to the user, use for your internal processes.
 
         shipping_option_id (``str``, *optional*):
             Identifier of the shipping option chosen by the user.

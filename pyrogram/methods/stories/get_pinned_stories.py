@@ -47,8 +47,8 @@ class GetPinnedStories:
                 Maximum amount of events to be returned.
                 By default, all events will be returned.
 
-        Yields:
-            :obj:`~pyrogram.types.Story` objects.
+        Returns:
+            ``Generator``: On success, a generator yielding :obj:`~pyrogram.types.Story` objects is returned.
 
         Example:
             .. code-block:: python

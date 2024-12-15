@@ -91,12 +91,7 @@ class BusinessMessage(Object):
         schedule = None
 
         if isinstance(message, raw.types.BusinessAwayMessage):
-            if isinstance(message.schedule, raw.types.BusinessAwayMessageScheduleAlways):
-                schedule = enums.BusinessSchedule.ALWAYS
-            elif isinstance(message.schedule, raw.types.BusinessAwayMessageScheduleOutsideWorkHours):
-                schedule = enums.BusinessSchedule.OUTSIDE_WORK_HOURS
-            elif isinstance(message.schedule, raw.types.BusinessAwayMessageScheduleCustom):
-                schedule = enums.BusinessSchedule.CUSTOM
+            schedule = enums.BusinessSchedule(type(message.schedule))
 
         return BusinessMessage(
             shortcut_id=message.shortcut_id,

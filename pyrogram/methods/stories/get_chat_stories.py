@@ -44,7 +44,7 @@ class GetChatStories:
         Example:
             .. code-block:: python
 
-                # Get all non expired stories from spesific chat
+                # Get all non expired stories from specific chat
                 async for story in app.get_chat_stories(chat_id):
                     print(story)
 

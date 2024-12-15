@@ -39,7 +39,7 @@ class EditInlineMedia:
         media: "types.InputMedia",
         reply_markup: "types.InlineKeyboardMarkup" = None
     ) -> bool:
-        """Edit inline animation, audio, document, photo or video messages.
+        """Edit inline animation, audio, document, photo or video messages, or to add media to text messages.
 
         When the inline message is edited, a new file can't be uploaded. Use a previously uploaded file via its file_id
         or specify a URL.
@@ -78,6 +78,7 @@ class EditInlineMedia:
         """
         caption = media.caption
         parse_mode = media.parse_mode
+        caption_entities = media.caption_entities
 
         is_bytes_io = isinstance(media.media, io.BytesIO)
         is_uploaded_file = is_bytes_io or os.path.isfile(media.media)
@@ -231,7 +232,7 @@ class EditInlineMedia:
                         id=unpacked,
                         media=actual_media,
                         reply_markup=await reply_markup.write(self) if reply_markup else None,
-                        **await self.parser.parse(caption, parse_mode)
+                        **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
                     ),
                     sleep_threshold=self.sleep_threshold
                 )

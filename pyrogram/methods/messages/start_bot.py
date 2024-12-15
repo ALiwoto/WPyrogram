@@ -28,7 +28,7 @@ class StartBot:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         param: str = ""
-    ) -> bool:
+    ) -> "types.Message":
         """Start bot
 
         .. include:: /_includes/usable-by/users.rst

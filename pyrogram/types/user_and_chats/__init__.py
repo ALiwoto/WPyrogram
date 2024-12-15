@@ -43,6 +43,8 @@ from .folder import Folder
 from .found_contacts import FoundContacts
 from .group_call_member import GroupCallMember
 from .invite_link_importer import InviteLinkImporter
+from .phone_call_ended import PhoneCallEnded
+from .phone_call_started import PhoneCallStarted
 from .privacy_rule import PrivacyRule
 from .restriction import Restriction
 from .user import User
@@ -72,6 +74,8 @@ __all__ = [
     "ChatEventFilter",
     "ChatInviteLink",
     "InviteLinkImporter",
+    "PhoneCallEnded",
+    "PhoneCallStarted",
     "PrivacyRule",
     "ChatAdminWithInviteLinks",
     "ChatColor",

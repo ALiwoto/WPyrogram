@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Union, Optional
-import pyrogram
+
 from pyrogram import raw
 from pyrogram import types
 from ..object import Object
@@ -86,7 +86,6 @@ class SuccessfulPayment(Object):
 
     @staticmethod
     def _parse(
-        client: "pyrogram.Client",
         successful_payment: Union[
             "raw.types.MessageActionPaymentSent",
             "raw.types.MessageActionPaymentSentMe"

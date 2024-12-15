@@ -57,23 +57,38 @@ class Storage(ABC):
 
     @abstractmethod
     async def delete(self):
-        """Deletes the storage."""
+        """Deletes the storage file."""
         raise NotImplementedError
 
     @abstractmethod
-    async def update_peers(self, peers: List[Tuple[int, int, str, List[str], str]]):
+    async def update_peers(self, peers: List[Tuple[int, int, str, str]]):
         """
         Update the peers table with the provided information.
 
         Parameters:
-            peers (``List[Tuple[int, int, str, List[str], str]]``): A list of tuples containing the
+            peers (``List[Tuple[int, int, str, str]]``):
+                A list of tuples containing the
                 information of the peers to be updated. Each tuple must contain the following
                 information:
                 - ``int``: The peer id.
                 - ``int``: The peer access hash.
                 - ``str``: The peer type (user, chat or channel).
-                - List of ``str``: The peer username (if any).
                 - ``str``: The peer phone number (if any).
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_usernames(self, usernames: List[Tuple[int, List[str]]]):
+        """
+        Update the usernames table with the provided information.
+
+        Parameters:
+            usernames (``List[Tuple[int, List[str]]]``):
+                A list of tuples containing the
+                information of the usernames to be updated. Each tuple must contain the following
+                information:
+                - ``int``: The peer id.
+                - List of ``str``: The peer username (if any).
         """
         raise NotImplementedError
 
@@ -82,7 +97,8 @@ class Storage(ABC):
         """Get or set the update state of the current session.
 
         Parameters:
-            update_state (``Tuple[int, int, int, int, int]``): A tuple containing the update state to set.
+            update_state (``Tuple[int, int, int, int, int]``):
+                A tuple containing the update state to set.
                 Tuple must contain the following information:
                 - ``int``: The id of the entity.
                 - ``int``: The pts.

@@ -37,7 +37,7 @@ class SendWebPage:
         disable_notification: bool = None,
         message_thread_id: int = None,
         effect_id: int = None,
-        show_above_text: bool = None,
+        show_caption_above_media: bool = None,
         reply_to_message_id: int = None,
         reply_to_chat_id: Union[int, str] = None,
         reply_to_story_id: int = None,
@@ -47,6 +47,7 @@ class SendWebPage:
         schedule_date: datetime = None,
         protect_content: bool = None,
         business_connection_id: str = None,
+        allow_paid_broadcast: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -86,9 +87,8 @@ class SendWebPage:
                 If True, media in the link preview will be smaller.
                 Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
 
-            show_above_text (``bool``, *optional*):
-                If True, link preview will be shown above the message text.
-                Otherwise, the link preview will be shown below the message text.
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -128,6 +128,12 @@ class SendWebPage:
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -186,7 +192,8 @@ class SendWebPage:
                     force_large_media=prefer_large_media,
                     force_small_media=prefer_small_media
                 ),
-                invert_media=show_above_text,
+                invert_media=show_caption_above_media,
+                allow_paid_floodskip=allow_paid_broadcast,
                 entities=entities,
                 noforwards=protect_content,
                 effect=effect_id

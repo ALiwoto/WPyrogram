@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 from typing import Union, AsyncGenerator, Optional
 
 import pyrogram
@@ -27,7 +28,12 @@ class GetChatPhotos:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         limit: int = 0,
-    ) -> AsyncGenerator["types.Photo", None]:
+    ) -> Optional[
+        Union[
+            AsyncGenerator["types.Photo", None],
+            AsyncGenerator["types.Animation", None]
+        ]
+    ]:
         """Get a chat or a user profile photos sequentially.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -43,7 +49,7 @@ class GetChatPhotos:
                 By default, no limit is applied and all profile photos are returned.
 
         Returns:
-            ``Generator``: A generator yielding :obj:`~pyrogram.types.Photo` objects.
+            ``Generator``: A generator yielding :obj:`~pyrogram.types.Photo` | :obj:`~pyrogram.types.Animation` objects.
 
         Example:
             .. code-block:: python
@@ -60,39 +66,50 @@ class GetChatPhotos:
                 )
             )
 
-            current = types.Photo._parse(self, r.full_chat.chat_photo) or []
-
-            r = await utils.parse_messages(
+            current = types.Animation._parse_chat_animation(
                 self,
-                await self.invoke(
-                    raw.functions.messages.Search(
-                        peer=peer_id,
-                        q="",
-                        filter=raw.types.InputMessagesFilterChatPhotos(),
-                        min_date=0,
-                        max_date=0,
-                        offset_id=0,
-                        add_offset=0,
-                        limit=limit,
-                        max_id=0,
-                        min_id=0,
-                        hash=0
+                r.full_chat.chat_photo,
+                f"photo_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
+            ) or types.Photo._parse(self, r.full_chat.chat_photo) or []
+
+            if current:
+                current = [current]
+
+            if not self.me.is_bot:
+                r = await utils.parse_messages(
+                    self,
+                    await self.invoke(
+                        raw.functions.messages.Search(
+                            peer=peer_id,
+                            q="",
+                            filter=raw.types.InputMessagesFilterChatPhotos(),
+                            min_date=0,
+                            max_date=0,
+                            offset_id=0,
+                            add_offset=0,
+                            limit=limit,
+                            max_id=0,
+                            min_id=0,
+                            hash=0
+                        )
                     )
                 )
-            )
 
-            extra = [message.new_chat_photo for message in r]
+                extra = [message.new_chat_photo for message in r]
 
-            if extra:
-                if current:
-                    photos = ([current] + extra) if current.file_id != extra[0].file_id else extra
+                if extra:
+                    if current:
+                        photos = (current + extra) if current[0].file_id != extra[0].file_id else extra
+                    else:
+                        photos = extra
                 else:
-                    photos = extra
-            else:
-                if current:
-                    photos = [current]
-                else:
-                    photos = []
+                    if current:
+                        photos = current
+                    else:
+                        photos = []
+
+            if not photos:
+                return
 
             current = 0
 
@@ -119,7 +136,14 @@ class GetChatPhotos:
                     )
                 )
 
-                photos = [types.Photo._parse(self, photo) for photo in r.photos]
+                photos = [
+                    types.Animation._parse_chat_animation(
+                        self,
+                        photo,
+                        f"photo_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
+                    ) or types.Photo._parse(self, photo)
+                    for photo in r.photos
+                ]
 
                 if not photos:
                     return

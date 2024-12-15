@@ -43,8 +43,9 @@ class SendCachedMedia:
         schedule_date: datetime = None,
         protect_content: bool = None,
         has_spoiler: bool = None,
-        show_above_text: bool = None,
+        show_caption_above_media: bool = None,
         business_connection_id: str = None,
+        allow_paid_broadcast: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -112,12 +113,17 @@ class SendCachedMedia:
             has_spoiler (``bool``, *optional*):
                 True, if the message media is covered by a spoiler animation.
 
-            show_above_text (``bool``, *optional*):
-                If True, link preview will be shown above the message text.
-                Otherwise, the link preview will be shown below the message text.
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -139,7 +145,7 @@ class SendCachedMedia:
                 peer=peer,
                 media=utils.get_input_media_from_file_id(file_id, has_spoiler=has_spoiler),
                 silent=disable_notification or None,
-                invert_media=show_above_text,
+                invert_media=show_caption_above_media,
                 reply_to=utils.get_reply_to(
                     reply_to_message_id=reply_to_message_id,
                     message_thread_id=message_thread_id,
@@ -152,6 +158,7 @@ class SendCachedMedia:
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
+                allow_paid_floodskip=allow_paid_broadcast,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
             ),
@@ -169,5 +176,5 @@ class SendCachedMedia:
                     {i.id: i for i in r.chats},
                     is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
                     business_connection_id=getattr(i, "connection_id", None),
-                    reply_to_message=getattr(i, "reply_to_message", None)
+                    raw_reply_to_message=getattr(i, "reply_to_message", None)
                 )

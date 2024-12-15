@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, Iterable
+from typing import Union, Iterable, List
 
 import pyrogram
 from pyrogram import raw
@@ -28,7 +28,7 @@ class GetStories:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         story_ids: Union[int, Iterable[int]],
-    ) -> "types.Stories":
+    ) -> Union["types.Story", List["types.Story"]] :
         """Get one or more stories from a chat by using stories identifiers.
 
         .. include:: /_includes/usable-by/users.rst
@@ -39,7 +39,7 @@ class GetStories:
                 For your personal story you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            story_ids (``int`` | Iterable of ``int``, *optional*):
+            story_ids (``int`` | Iterable of ``int``):
                 Pass a single story identifier or an iterable of story ids (as integers) to get the content of the
                 story themselves.
 
