@@ -137,3 +137,11 @@ def test_markdown_unparse_no_entities():
     entities = []
 
     assert Markdown.unparse(text=text, entities=entities) == expected
+
+def test_markdown_unparse_html():
+    expected = "__This works, it's ok__ <b>This shouldn't</b>"
+    text = "This works, it's ok <b>This shouldn't</b>"
+    entities = pyrogram.types.List(
+        [pyrogram.types.MessageEntity(type=pyrogram.enums.MessageEntityType.ITALIC, offset=0, length=19)])
+
+    assert Markdown.unparse(text=text, entities=entities) == expected

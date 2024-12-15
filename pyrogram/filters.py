@@ -18,7 +18,7 @@
 
 import inspect
 import re
-from typing import Callable, Union, List, Pattern
+from typing import Callable, Union, List, Pattern, Optional
 
 import pyrogram
 from pyrogram import enums
@@ -261,6 +261,16 @@ caption = create(caption_filter)
 
 # endregion
 
+# region self_destruction_filter
+async def self_destruction_filter(_, __, m: Message):
+    return bool(m.media and getattr(getattr(m, m.media.value, None), "ttl_seconds", None))
+
+
+self_destruction = create(self_destruction_filter)
+"""Filter self-destruction media messages."""
+
+
+# endregion
 
 # region audio_filter
 async def audio_filter(_, __, m: Message):
@@ -339,13 +349,13 @@ giveaway = create(giveaway_filter)
 
 # endregion
 
-# region giveaway_result_filter
-async def giveaway_result_filter(_, __, m: Message):
-    return bool(m.giveaway_result)
+# region giveaway_winners_filter
+async def giveaway_winners_filter(_, __, m: Message):
+    return bool(m.giveaway_winners)
 
 
-giveaway_result = create(giveaway_result_filter)
-"""Filter messages that contain :obj:`~pyrogram.types.GiveawayResult` objects."""
+giveaway_winners = create(giveaway_winners_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.GiveawayWinners` objects."""
 
 
 # endregion
@@ -357,6 +367,17 @@ async def gift_code_filter(_, __, m: Message):
 
 gift_code = create(gift_code_filter)
 """Filter messages that contain :obj:`~pyrogram.types.GiftCode` objects."""
+
+
+# endregion
+
+# region star_gift_filter
+async def star_gift_filter(_, __, m: Message):
+    return bool(m.star_gift)
+
+
+star_gift = create(star_gift_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.StarGift` objects."""
 
 
 # endregion
@@ -971,7 +992,7 @@ def regex(pattern: Union[str, Pattern], flags: int = 0):
         elif isinstance(update, InlineQuery):
             value = update.query
         elif isinstance(update, PreCheckoutQuery):
-            value = update.payload
+            value = update.invoice_payload
         else:
             raise ValueError(f"Regex filter doesn't work with {type(update)}")
 
@@ -1001,7 +1022,7 @@ class user(Filter, set):
             Defaults to None (no users).
     """
 
-    def __init__(self, users: Union[int, str, List[Union[int, str]]] = None):
+    def __init__(self, users: Optional[Union[int, str, List[Union[int, str]]]] = None):
         users = [] if users is None else users if isinstance(users, list) else [users]
 
         super().__init__(
@@ -1033,7 +1054,7 @@ class chat(Filter, set):
             Defaults to None (no chats).
     """
 
-    def __init__(self, chats: Union[int, str, List[Union[int, str]]] = None):
+    def __init__(self, chats: Optional[Union[int, str, List[Union[int, str]]]] = None):
         chats = [] if chats is None else chats if isinstance(chats, list) else [chats]
 
         super().__init__(
@@ -1066,7 +1087,7 @@ class topic(Filter, set):
             Defaults to None (no topics).
     """
 
-    def __init__(self, topics: Union[int, List[int]] = None):
+    def __init__(self, topics: Optional[Union[int, List[int]]] = None):
         topics = [] if topics is None else topics if isinstance(topics, list) else [topics]
 
         super().__init__(
