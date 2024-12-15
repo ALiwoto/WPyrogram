@@ -2,6 +2,7 @@ id	message
 AUTH_KEY_DUPLICATED	The same authorization key (session file) was used in more than one place simultaneously. You must delete your session file and log in again with your phone number or bot token
 BANNED_RIGHTS_INVALID	You provided some invalid flags in the banned rights.
 BOT_PRECHECKOUT_FAILED	Bot precheckout is failed
+BUSINESS_ADDRESS_ACTIVE	The user is currently advertising a [Business Location](https://core.telegram.org/api/business#location), the location may only be changed (or removed) using [account.updateBusinessLocation »](https://core.telegram.org/method/account.updateBusinessLocation).  .
 CALL_PROTOCOL_COMPAT_LAYER_INVALID	The other side of the call does not support any of the VoIP protocols supported by the local client, as specified by the `protocol.layer` and `protocol.library_versions` fields.
 CHANNEL_PRIVATE	The channel/supergroup is not accessible
 CHANNEL_TOO_LARGE	Сhannel is too large to be deleted. Contact support for removal
@@ -19,6 +20,7 @@ PREMIUM_CURRENTLY_UNAVAILABLE	Premium currently unavailable
 PREVIOUS_CHAT_IMPORT_ACTIVE_WAIT_XMIN	Similar to a flood wait, must wait {value} minutes
 PRIVACY_PREMIUM_REQUIRED	You need a [Telegram Premium subscription](https://core.telegram.org/api/premium) to send a message to this user.
 SEND_CODE_UNAVAILABLE	Returned when all available options for this type of number were already used (e.g. flash-call, then SMS, then this error might be returned to trigger a second resend)
+STARGIFT_USAGE_LIMITED	Star gift usage limited
 STICKERSET_INVALID	The sticker set is invalid
 STICKERSET_OWNER_ANONYMOUS	This sticker set can't be used as the group's sticker set because it was created by one of its anonymous admins
 TOPIC_CLOSED	This topic was closed, you can't send messages to it anymore.

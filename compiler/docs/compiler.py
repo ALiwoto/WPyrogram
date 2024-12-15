@@ -890,6 +890,7 @@ def pyrogram_api():
             ClientPlatform
             FolderColor
             MessageEntityType
+            MessageMediaType
             MessageServiceType
             MessagesFilter
             NextCodeType

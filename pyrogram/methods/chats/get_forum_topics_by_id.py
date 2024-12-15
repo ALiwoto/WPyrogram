@@ -101,4 +101,4 @@ class GetForumTopicsByID:
                 chats=chats
             ))
 
-        return topics if is_iterable else topics[0] if topics else None
+        return topics_list if is_iterable else topics_list[0] if topics_list else None
