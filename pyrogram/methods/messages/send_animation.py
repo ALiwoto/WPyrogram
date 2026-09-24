@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import re
 from datetime import datetime
@@ -28,6 +29,9 @@ from pyrogram import types
 from pyrogram import utils
 from pyrogram.errors import FilePartMissing
 from pyrogram.file_id import FileType
+
+
+log = logging.getLogger(__name__)
 
 
 class SendAnimation:
@@ -266,6 +270,8 @@ class SendAnimation:
 
             quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
+            random_id = self.rnd_id()
+
             while True:
                 try:
                     peer = await self.resolve_peer(chat_id)
@@ -283,7 +289,7 @@ class SendAnimation:
                                 quote_entities=quote_entities,
                                 quote_offset=quote_offset,
                             ),
-                            random_id=self.rnd_id(),
+                            random_id=random_id,
                             schedule_date=utils.datetime_to_timestamp(schedule_date),
                             noforwards=protect_content,
                             allow_paid_floodskip=allow_paid_broadcast,
@@ -296,28 +302,37 @@ class SendAnimation:
                 except FilePartMissing as e:
                     await self.save_file(animation, file_id=file.id, file_part=e.value)
                 else:
-                    for i in r.updates:
-                        if isinstance(i, (raw.types.UpdateNewMessage,
-                                          raw.types.UpdateNewChannelMessage,
-                                          raw.types.UpdateNewScheduledMessage,
-                                          raw.types.UpdateBotNewBusinessMessage)):
-                            message = await types.Message._parse(
-                                self, i.message,
-                                {i.id: i for i in r.users},
-                                {i.id: i for i in r.chats},
-                                is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
-                                business_connection_id=getattr(i, "connection_id", None),
-                            )
+                    break
 
-                            if unsave and message.animation:
-                                document_id = utils.get_input_media_from_file_id(
-                                    message.animation.file_id,
-                                    FileType.ANIMATION,
-                                ).id
+            for i in r.updates:
+                if isinstance(i, (raw.types.UpdateNewMessage,
+                                  raw.types.UpdateNewChannelMessage,
+                                  raw.types.UpdateNewScheduledMessage,
+                                  raw.types.UpdateBotNewBusinessMessage)):
+                    message = await types.Message._parse(
+                        self, i.message,
+                        {i.id: i for i in r.users},
+                        {i.id: i for i in r.chats},
+                        is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
+                        business_connection_id=getattr(i, "connection_id", None),
+                    )
 
-                                await self.invoke(raw.functions.messages.SaveGif(id=document_id, unsave=True))  # type: ignore[arg-type]
+                    if unsave and message.animation:
+                        document_id = utils.get_input_media_from_file_id(
+                            message.animation.file_id,
+                            FileType.ANIMATION,
+                        ).id
 
-                            return message
+                        await self.invoke(raw.functions.messages.SaveGif(id=document_id, unsave=True))  # type: ignore[arg-type]
 
+                    return message
+
+            log.warning(
+                "send_animation returned no new message update for chat %s (random_id=%s); "
+                "the media may already have been sent.",
+                chat_id,
+                random_id
+            )
+            return None
         except StopTransmission:
             return None

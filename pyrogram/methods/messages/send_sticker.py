@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import re
 from datetime import datetime
@@ -29,6 +30,9 @@ from pyrogram import utils
 from pyrogram import enums
 from pyrogram.errors import FilePartMissing
 from pyrogram.file_id import FileType
+
+
+log = logging.getLogger(__name__)
 
 
 class SendSticker:
@@ -196,6 +200,8 @@ class SendSticker:
 
             quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
+            random_id = self.rnd_id()
+
             while True:
                 try:
                     peer = await self.resolve_peer(chat_id)
@@ -213,7 +219,7 @@ class SendSticker:
                                 quote_entities=quote_entities,
                                 quote_offset=quote_offset,
                             ),
-                            random_id=self.rnd_id(),
+                            random_id=random_id,
                             schedule_date=utils.datetime_to_timestamp(schedule_date),
                             noforwards=protect_content,
                             allow_paid_floodskip=allow_paid_broadcast,
@@ -226,17 +232,27 @@ class SendSticker:
                 except FilePartMissing as e:
                     await self.save_file(sticker, file_id=file.id, file_part=e.value)
                 else:
-                    for i in r.updates:
-                        if isinstance(i, (raw.types.UpdateNewMessage,
-                                          raw.types.UpdateNewChannelMessage,
-                                          raw.types.UpdateNewScheduledMessage,
-                                          raw.types.UpdateBotNewBusinessMessage)):
-                            return await types.Message._parse(
-                                self, i.message,
-                                {i.id: i for i in r.users},
-                                {i.id: i for i in r.chats},
-                                is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
-                                business_connection_id=getattr(i, "connection_id", None)
-                            )
+                    break
+
+            for i in r.updates:
+                if isinstance(i, (raw.types.UpdateNewMessage,
+                                  raw.types.UpdateNewChannelMessage,
+                                  raw.types.UpdateNewScheduledMessage,
+                                  raw.types.UpdateBotNewBusinessMessage)):
+                    return await types.Message._parse(
+                        self, i.message,
+                        {i.id: i for i in r.users},
+                        {i.id: i for i in r.chats},
+                        is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
+                        business_connection_id=getattr(i, "connection_id", None)
+                    )
+
+            log.warning(
+                "send_sticker returned no new message update for chat %s (random_id=%s); "
+                "the media may already have been sent.",
+                chat_id,
+                random_id
+            )
+            return None
         except StopTransmission:
             return None
