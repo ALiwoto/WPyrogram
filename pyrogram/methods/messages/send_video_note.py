@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Union, BinaryIO, Optional, Callable, List
 
 import pyrogram
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import StopTransmission
 from pyrogram import raw
 from pyrogram import types
@@ -57,12 +58,7 @@ class SendVideoNote:
         view_once: bool = None,
         business_connection_id: str = None,
         allow_paid_broadcast: bool = None,
-        reply_markup: Union[
-            "types.InlineKeyboardMarkup",
-            "types.ReplyKeyboardMarkup",
-            "types.ReplyKeyboardRemove",
-            "types.ForceReply"
-        ] = None,
+        reply_markup: "Optional[ReplyMarkup]" = None,
         progress: Callable = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
@@ -257,7 +253,7 @@ class SendVideoNote:
                             schedule_date=utils.datetime_to_timestamp(schedule_date),
                             noforwards=protect_content,
                             allow_paid_floodskip=allow_paid_broadcast,
-                            reply_markup=await reply_markup.write(self) if reply_markup else None,
+                            reply_markup=await utils.write_reply_markup(self, reply_markup, for_send=True),
                             message="",
                             effect=effect_id
                         ),

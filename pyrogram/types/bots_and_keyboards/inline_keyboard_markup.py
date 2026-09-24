@@ -16,12 +16,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import Dict, List, Union
 
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
 from ..object import Object
+from pyrogram.reply_markup import parse_inline_buttons
 
 
 class InlineKeyboardMarkup(Object):
@@ -36,6 +37,15 @@ class InlineKeyboardMarkup(Object):
         super().__init__()
 
         self.inline_keyboard = inline_keyboard
+
+    @classmethod
+    def from_buttons(cls, buttons: Union[Dict[str, str], List[Dict[str, str]]]) -> "InlineKeyboardMarkup":
+        """Build buttons from a title/value dict, or a list of row dicts.
+
+        Dict keys prefixed with ``same::`` share the previous row.
+        Values are URLs, ``app::`` web-app URLs, or callback data.
+        """
+        return cls(parse_inline_buttons(buttons))
 
     @staticmethod
     def read(o):

@@ -17,12 +17,14 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import Any, Optional
 
 import pyrogram
 from pyrogram import raw
 from pyrogram.raw.core import TLObject
 from pyrogram.session import Session
 from pyrogram.methods.messages.business_session import get_session
+from pyrogram.helper_bot import send_with_helper_bot
 
 log = logging.getLogger(__name__)
 
@@ -33,9 +35,9 @@ class Invoke:
         query: TLObject,
         retries: int = Session.MAX_RETRIES,
         timeout: float = Session.WAIT_TIMEOUT,
-        sleep_threshold: float = None,
-        business_connection_id: str = None
-    ):
+        sleep_threshold: Optional[float] = None,
+        business_connection_id: Optional[str] = None
+    ) -> Any:
         """Invoke raw Telegram functions.
 
         This method makes it possible to manually call every single Telegram API method in a low-level manner.
@@ -74,6 +76,15 @@ class Invoke:
         """
         if not self.is_connected:
             raise ConnectionError("Client has not been started yet")
+
+        if (self.helper_bot is not None and self.me is not None and not self.me.is_bot
+                and isinstance(query, (raw.functions.messages.SendMessage, raw.functions.messages.SendMedia))
+                and isinstance(query.reply_markup, raw.types.ReplyInlineMarkup)):
+            if business_connection_id:
+                raise ValueError("The helper bot inline API does not support business connections")
+            return await send_with_helper_bot(
+                self, query, retries=retries, timeout=timeout, sleep_threshold=sleep_threshold
+            )
 
         session = self.session
 

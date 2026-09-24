@@ -19,6 +19,8 @@
 from typing import Union
 
 import pyrogram
+from typing import Optional
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw
 from pyrogram import types
 from pyrogram import utils
@@ -36,12 +38,7 @@ class SendGame:
         reply_to_chat_id: Union[int, str] = None,
         protect_content: bool = None,
         allow_paid_broadcast: bool = None,
-        reply_markup: Union[
-            "types.InlineKeyboardMarkup",
-            "types.ReplyKeyboardMarkup",
-            "types.ReplyKeyboardRemove",
-            "types.ForceReply"
-        ] = None
+        reply_markup: "Optional[ReplyMarkup]" = None
     ) -> "types.Message":
         """Send a game.
 
@@ -114,7 +111,7 @@ class SendGame:
                 random_id=self.rnd_id(),
                 noforwards=protect_content,
                 allow_paid_floodskip=allow_paid_broadcast,
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                reply_markup=await utils.write_reply_markup(self, reply_markup, for_send=True),
                 effect=effect_id
             )
         )

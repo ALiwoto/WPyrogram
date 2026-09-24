@@ -19,8 +19,11 @@
 from typing import Union
 
 import pyrogram
+from typing import Optional
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw
 from pyrogram import types
+from pyrogram import utils
 
 
 class StopPoll:
@@ -28,7 +31,7 @@ class StopPoll:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         message_id: int,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: "Optional[ReplyMarkup]" = None
     ) -> "types.Poll":
         """Stop a poll which was sent by you.
 
@@ -70,7 +73,7 @@ class StopPoll:
                         answers=[]
                     )
                 ),
-                reply_markup=await reply_markup.write(self) if reply_markup else None
+                reply_markup=await utils.write_reply_markup(self, reply_markup)
             )
         )
 

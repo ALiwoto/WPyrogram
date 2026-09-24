@@ -32,7 +32,7 @@ from importlib import import_module
 from io import StringIO, BytesIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Union, List, Optional, Callable, AsyncGenerator, Type, Tuple
+from typing import Union, List, Optional, Callable, AsyncGenerator, Type, Tuple, Dict
 
 import pyrogram
 from pyrogram import __version__, __license__
@@ -58,6 +58,7 @@ from .connection import Connection
 from .connection.transport import TCP, TCPAbridged
 from .dispatcher import Dispatcher
 from .file_id import FileId, FileType, ThumbnailSource
+from .helper_bot import HelperBotQuery, answer_helper_bot_query
 from .mime_types import mime_types
 from .parser import Parser
 from .session.internals import MsgId
@@ -269,7 +270,9 @@ class Client(Methods):
         client_platform: "enums.ClientPlatform" = enums.ClientPlatform.OTHER,
         init_connection_params: Optional["raw.base.JSONValue"] = None,
         connection_factory: Type[Connection] = Connection,
-        protocol_factory: Type[TCP] = TCPAbridged
+        protocol_factory: Type[TCP] = TCPAbridged,
+        helper_bot: Optional["Client"] = None,
+        helper_bot_chat_id: Optional[Union[int, str]] = None
     ):
         super().__init__()
 
@@ -306,6 +309,9 @@ class Client(Methods):
         self.init_connection_params = init_connection_params
         self.connection_factory = connection_factory
         self.protocol_factory = protocol_factory
+        self.helper_bot = helper_bot
+        self.helper_bot_chat_id = helper_bot_chat_id
+        self._helper_bot_queries: Dict[str, HelperBotQuery] = {}
 
         self.executor = ThreadPoolExecutor(self.workers, thread_name_prefix="Handler")
 
@@ -660,6 +666,9 @@ class Client(Methods):
                                 users.update({u.id: u for u in diff.users})
                                 chats.update({c.id: c for c in diff.chats})
 
+                # Internal inline replies must not wait for a busy application handler.
+                if await answer_helper_bot_query(self, update):
+                    continue
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
             if not self.skip_updates:
@@ -695,6 +704,8 @@ class Client(Methods):
                 if diff.other_updates:  # The other_updates list can be empty
                     self.dispatcher.updates_queue.put_nowait((diff.other_updates[0], {}, {}))
         elif isinstance(updates, raw.types.UpdateShort):
+            if await answer_helper_bot_query(self, updates.update):
+                return
             self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
         elif isinstance(updates, raw.types.UpdatesTooLong):
             log.info(updates)

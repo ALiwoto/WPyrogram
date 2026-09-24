@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Union, List, Optional
 
 import pyrogram
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw, utils, enums
 from pyrogram import types
 
@@ -46,13 +47,8 @@ class SendMessage:
         protect_content: bool = None,
         business_connection_id: str = None,
         allow_paid_broadcast: bool = None,
-        reply_markup: Union[
-            "types.InlineKeyboardMarkup",
-            "types.ReplyKeyboardMarkup",
-            "types.ReplyKeyboardRemove",
-            "types.ForceReply"
-        ] = None
-    ) -> "types.Message":
+        reply_markup: "Optional[ReplyMarkup]" = None
+    ) -> Optional["types.Message"]:
         """Send text messages.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -166,6 +162,9 @@ class SendMessage:
                         ]))
         """
 
+        if isinstance(reply_markup, (dict, list)):
+            reply_markup = types.InlineKeyboardMarkup.from_buttons(reply_markup)
+
         message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
         quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
@@ -189,7 +188,7 @@ class SendMessage:
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 allow_paid_floodskip=allow_paid_broadcast,
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                reply_markup=await utils.write_reply_markup(self, reply_markup, for_send=True),
                 message=message,
                 entities=entities,
                 noforwards=protect_content,

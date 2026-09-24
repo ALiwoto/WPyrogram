@@ -23,6 +23,8 @@ import re
 from typing import Union
 
 import pyrogram
+from typing import Optional
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw
 from pyrogram import types
 from pyrogram import utils
@@ -37,7 +39,7 @@ class EditMessageMedia:
         media: "types.InputMedia",
         show_caption_above_media: bool = None,
         schedule_date: datetime = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
+        reply_markup: "Optional[ReplyMarkup]" = None,
         file_name: str = None
     ) -> "types.Message":
         """Edit animation, audio, document, photo or video messages, or to add media to text messages.
@@ -288,7 +290,7 @@ class EditMessageMedia:
                 invert_media=show_caption_above_media,
                 media=media,
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                reply_markup=await utils.write_reply_markup(self, reply_markup),
                 message=message,
                 entities=entities
             )

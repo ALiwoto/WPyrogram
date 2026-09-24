@@ -17,6 +17,8 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import pyrogram
+from typing import Optional
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw
 from pyrogram import types
 from pyrogram import utils
@@ -27,7 +29,7 @@ class EditInlineReplyMarkup:
     async def edit_inline_reply_markup(
         self: "pyrogram.Client",
         inline_message_id: str,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: "Optional[ReplyMarkup]" = None
     ) -> bool:
         """Edit only the reply markup of inline messages sent via the bot (for inline bots).
 
@@ -63,7 +65,7 @@ class EditInlineReplyMarkup:
         return await session.invoke(
             raw.functions.messages.EditInlineBotMessage(
                 id=unpacked,
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                reply_markup=await utils.write_reply_markup(self, reply_markup),
             ),
             sleep_threshold=self.sleep_threshold
         )

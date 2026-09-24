@@ -34,6 +34,7 @@ from pyrogram import raw, enums
 from pyrogram import types
 from pyrogram.types.messages_and_media.message import Str
 from pyrogram.file_id import FileId, FileType, PHOTO_TYPES, DOCUMENT_TYPES
+from pyrogram.reply_markup import write_reply_markup as write_reply_markup
 
 
 async def ainput(prompt: str = "", *, hide: bool = False):

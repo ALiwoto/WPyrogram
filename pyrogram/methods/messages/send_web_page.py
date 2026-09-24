@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Union, List, Optional
 
 import pyrogram
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw, utils, enums
 from pyrogram import types
 
@@ -48,12 +49,7 @@ class SendWebPage:
         protect_content: bool = None,
         business_connection_id: str = None,
         allow_paid_broadcast: bool = None,
-        reply_markup: Union[
-            "types.InlineKeyboardMarkup",
-            "types.ReplyKeyboardMarkup",
-            "types.ReplyKeyboardRemove",
-            "types.ForceReply"
-        ] = None
+        reply_markup: "Optional[ReplyMarkup]" = None
     ) -> "types.Message":
         """Send Web Page Preview.
 
@@ -185,7 +181,7 @@ class SendWebPage:
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                reply_markup=await utils.write_reply_markup(self, reply_markup, for_send=True),
                 message=message,
                 media=raw.types.InputMediaWebPage(
                     url=url,

@@ -19,6 +19,7 @@
 from typing import Optional, List
 
 import pyrogram
+from pyrogram.reply_markup import ReplyMarkup
 from pyrogram import raw, enums
 from pyrogram import types
 from pyrogram import utils
@@ -33,7 +34,7 @@ class EditInlineText:
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: "Optional[ReplyMarkup]" = None
     ) -> bool:
         """Edit the text of inline messages.
 
@@ -85,7 +86,7 @@ class EditInlineText:
             raw.functions.messages.EditInlineBotMessage(
                 id=unpacked,
                 no_webpage=disable_web_page_preview or None,
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                reply_markup=await utils.write_reply_markup(self, reply_markup),
                 **await utils.parse_text_entities(self, text, parse_mode, entities)
             ),
             sleep_threshold=self.sleep_threshold
