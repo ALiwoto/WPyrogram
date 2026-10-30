@@ -1,68 +1,51 @@
-name: PyPi package release
+name: PyPI package release
 
 on:
   push:
-    branches: [ Production ]
+    branches: [Production]
+  workflow_dispatch:
 
-permissions: write-all
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-release
+  cancel-in-progress: false
 
 jobs:
-  build-n-publish:
-    name: Build and publish to PyPI
+  build:
+    uses: ./.github/workflows/python.yml
+
+  publish:
+    needs: build
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          python-version: "3.x"
-
-      - name: Read package version
-        id: package
-        run: |
-          python - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-
-          source = Path("pyrogram/__init__.py").read_text(encoding="utf-8")
-          version = re.search(r'^__version__ = "([^"]+)"$', source, re.MULTILINE).group(1)
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"version={version}\n")
-          PY
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install tox
-
-      - name: Generate API
-        run: |
-          make venv
-          make api
-
-      - name: Build source and wheel distributions
-        run: |
-          python -m pip install --upgrade build twine
-          python -m build
-          twine check --strict dist/wpyrogram* 2>&1
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@master
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          user: __token__
+          name: sdist
+          path: dist
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-
-      - name: Create GitHub release
+          attestations: false
+      - name: Create GitHub release with all distributions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.package.outputs.version }}
+        shell: bash
         run: |
-          gh release create "v${VERSION}" dist/*.tar.gz \
+          archive=(dist/wpyrogram-*.tar.gz)
+          version=${archive[0]#dist/wpyrogram-}
+          version=${version%.tar.gz}
+          gh release create "v${version}" dist/* \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "WPyrogram ${VERSION}" \
+            --title "WPyrogram ${version}" \
             --notes ""
-

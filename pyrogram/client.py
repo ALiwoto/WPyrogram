@@ -36,6 +36,7 @@ from typing import Union, List, Optional, Callable, AsyncGenerator, Type, Tuple,
 
 import pyrogram
 from pyrogram import __version__, __license__
+from pyrogram._asyncio import get_event_loop
 from pyrogram import enums
 from pyrogram import raw
 from pyrogram import utils
@@ -326,6 +327,7 @@ class Client(Methods):
         else:
             self.storage = FileStorage(self.name, self.workdir)
 
+        self.loop = get_event_loop()
         self.dispatcher: Dispatcher = Dispatcher(self)
 
         self.rnd_id = MsgId
@@ -363,7 +365,6 @@ class Client(Methods):
         self.updates_watchdog_event = asyncio.Event()
         self.last_update_time = datetime.now()
 
-        self.loop = asyncio.get_event_loop()
 
     def __enter__(self):
         return self.start()

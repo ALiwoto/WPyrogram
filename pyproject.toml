@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools==84.2.1", "wheel==0.48.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = "cp311-*"
+skip = "*-win32 *-musllinux_*"
+test-command = "python -c \"from pyrogram.crypto import _tgcrypto; from pyrogram import Client; print(_tgcrypto.__file__)\""
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

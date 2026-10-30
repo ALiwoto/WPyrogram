@@ -17,12 +17,9 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from sys import argv
-
-from setuptools import setup, find_packages
-
-from compiler.api import compiler as api_compiler
-from compiler.errors import compiler as errors_compiler
+import runpy
+from setuptools import Extension, setup, find_packages
+from setuptools.command.build_py import build_py
 
 with open("requirements.txt", encoding="utf-8") as r:
     requires = [i.strip() for i in r]
@@ -33,9 +30,15 @@ with open("pyrogram/__init__.py", encoding="utf-8") as f:
 with open("README.md", encoding="utf-8") as f:
     readme = f.read()
 
-if len(argv) > 1 and argv[1] in ["bdist_wheel", "install", "develop"]:
-    api_compiler.start()
-    errors_compiler.start()
+
+class BuildPy(build_py):
+    def run(self):
+        runpy.run_path("compiler/api/compiler.py")["start"]()
+        runpy.run_path("compiler/errors/compiler.py")["start"]()
+        self.distribution.packages = find_packages(exclude=["compiler*", "tests*"])
+        self.packages = self.distribution.packages
+        super().run()
+
 
 setup(
     name="WPyrogram",
@@ -56,14 +59,13 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+        "Programming Language :: Python :: 3.15",
         "Programming Language :: Python :: Implementation",
         "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Internet",
         "Topic :: Communications",
         "Topic :: Communications :: Chat",
@@ -78,11 +80,27 @@ setup(
         "Source": "https://github.com/ALiwoto/WPyrogram",
         "Documentation": "https://docs.pyrogram.org",
     },
-    python_requires="~=3.8",
+    python_requires=">=3.11",
     package_data={
         "pyrogram": ["py.typed"],
     },
     packages=find_packages(exclude=["compiler*", "tests*"]),
     zip_safe=False,
-    install_requires=requires
+    install_requires=requires,
+    cmdclass={"build_py": BuildPy},
+    ext_modules=[
+        Extension(
+            "pyrogram.crypto._tgcrypto",
+            sources=[
+                "pyrogram/crypto/tgcrypto/tgcrypto.c",
+                "pyrogram/crypto/tgcrypto/aes256.c",
+                "pyrogram/crypto/tgcrypto/ige256.c",
+                "pyrogram/crypto/tgcrypto/ctr256.c",
+                "pyrogram/crypto/tgcrypto/cbc256.c",
+            ],
+            define_macros=[("Py_LIMITED_API", "0x030B0000")],
+            py_limited_api=True,
+        )
+    ],
+    options={"bdist_wheel": {"py_limited_api": "cp311"}},
 )

@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
+
 import pyrogram
 from pyrogram.session import Session
 
@@ -37,6 +39,8 @@ class Connect:
         if self.is_connected:
             raise ConnectionError("Client is already connected")
 
+        self.loop = asyncio.get_running_loop()
+        self.dispatcher.loop = self.loop
         await self.load_session()
 
         self.session = Session(

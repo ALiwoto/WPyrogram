@@ -66,7 +66,7 @@ class Dispatcher:
 
     def __init__(self, client: "pyrogram.Client"):
         self.client = client
-        self.loop = asyncio.get_event_loop()
+        self.loop = client.loop
 
         self.handler_worker_tasks = []
         self.locks_list = []
@@ -240,37 +240,51 @@ class Dispatcher:
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
     def add_handler(self, handler, group: int):
+        if not self.client.is_initialized:
+            self._add_handler(handler, group)
+            return
+
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
 
             try:
-                if group not in self.groups:
-                    self.groups[group] = []
-                    self.groups = OrderedDict(sorted(self.groups.items()))
-
-                self.groups[group].append(handler)
+                self._add_handler(handler, group)
             finally:
                 for lock in self.locks_list:
                     lock.release()
 
         self.loop.create_task(fn())
+
+    def _add_handler(self, handler, group: int):
+        if group not in self.groups:
+            self.groups[group] = []
+            self.groups = OrderedDict(sorted(self.groups.items()))
+
+        self.groups[group].append(handler)
 
     def remove_handler(self, handler, group: int):
+        if not self.client.is_initialized:
+            self._remove_handler(handler, group)
+            return
+
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
 
             try:
-                if group not in self.groups:
-                    raise ValueError(f"Group {group} does not exist. Handler was not removed.")
-
-                self.groups[group].remove(handler)
+                self._remove_handler(handler, group)
             finally:
                 for lock in self.locks_list:
                     lock.release()
 
         self.loop.create_task(fn())
+
+    def _remove_handler(self, handler, group: int):
+        if group not in self.groups:
+            raise ValueError(f"Group {group} does not exist. Handler was not removed.")
+
+        self.groups[group].remove(handler)
 
     async def handler_worker(self, lock):
         while True:

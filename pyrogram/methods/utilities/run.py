@@ -20,6 +20,7 @@ import asyncio
 import inspect
 
 import pyrogram
+from pyrogram._asyncio import get_event_loop
 from pyrogram.methods.utilities.idle import idle
 
 
@@ -70,7 +71,7 @@ class Run:
 
                 app.run(main())
         """
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
         run = loop.run_until_complete
 
         if coroutine is not None:
