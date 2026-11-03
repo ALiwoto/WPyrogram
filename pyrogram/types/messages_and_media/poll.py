@@ -101,7 +101,8 @@ class Poll(Object, Update):
         explanation_entities: Optional[List["types.MessageEntity"]] = None,
         open_period: Optional[int] = None,
         close_date: Optional[datetime] = None,
-        voter: Optional["types.User"] = None
+        voter: Optional["types.User"] = None,
+        hash: int = 0,
     ):
         super().__init__(client)
 
@@ -121,6 +122,7 @@ class Poll(Object, Update):
         self.open_period = open_period
         self.close_date = close_date
         self.voter = voter
+        self.hash = hash
 
     @staticmethod
     def _parse(client, media_poll: Union["raw.types.MessageMediaPoll", "raw.types.UpdateMessagePoll"]) -> "Poll":
@@ -166,6 +168,7 @@ class Poll(Object, Update):
 
         return Poll(
             id=str(poll.id),
+            hash=poll.hash,
             question=Str(poll.question.text).init(
                 types.List(
                     filter(

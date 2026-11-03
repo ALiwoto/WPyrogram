@@ -68,6 +68,7 @@ class StopPoll:
                 media=raw.types.InputMediaPoll(
                     poll=raw.types.Poll(
                         id=int(poll.id),
+                        hash=poll.hash,
                         closed=True,
                         question=raw.types.TextWithEntities(text="", entities=[]),
                         answers=[]

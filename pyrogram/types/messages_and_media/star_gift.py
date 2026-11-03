@@ -104,7 +104,11 @@ class StarGift(Object):
         is_limited: Optional[bool] = None,
         is_name_hidden: Optional[bool] = None,
         is_saved: Optional[bool] = None,
-        is_sold_out: Optional[bool] = None
+        is_sold_out: Optional[bool] = None,
+        is_unique: bool = False,
+        title: Optional[str] = None,
+        slug: Optional[str] = None,
+        number: Optional[int] = None,
     ):
         super().__init__(client)
 
@@ -125,12 +129,34 @@ class StarGift(Object):
         self.is_name_hidden = is_name_hidden
         self.is_saved = is_saved
         self.is_sold_out = is_sold_out
+        self.is_unique = is_unique
+        self.title = title
+        self.slug = slug
+        self.number = number
 
     @staticmethod
     async def _parse(
         client,
-        star_gift: "raw.types.StarGift",
+        star_gift: "raw.base.StarGift",
     ) -> "StarGift":
+        if isinstance(star_gift, raw.types.StarGiftUnique):
+            model = next(
+                attribute for attribute in star_gift.attributes
+                if isinstance(attribute, raw.types.StarGiftAttributeModel)
+            )
+            doc = model.document
+            attributes = {type(attribute): attribute for attribute in doc.attributes}
+            return StarGift(
+                id=star_gift.id,
+                sticker=await types.Sticker._parse(client, doc, attributes),
+                total_amount=star_gift.availability_total,
+                is_unique=True,
+                title=star_gift.title,
+                slug=star_gift.slug,
+                number=star_gift.num,
+                client=client,
+            )
+
         doc = star_gift.sticker
         attributes = {type(i): i for i in doc.attributes}
 
@@ -151,35 +177,24 @@ class StarGift(Object):
     @staticmethod
     async def _parse_user_star_gift(
         client,
-        user_star_gift: "raw.types.UserStarGift",
+        user_star_gift: "raw.types.SavedStarGift",
         users: dict
     ) -> "StarGift":
-        doc = user_star_gift.gift.sticker
-        attributes = {type(i): i for i in doc.attributes}
-
         caption, caption_entities = (
             utils.parse_text_with_entities(
                 client, getattr(user_star_gift, "message", None), users
             )
         ).values()
 
-        return StarGift(
-            id=user_star_gift.gift.id,
-            sticker=await types.Sticker._parse(client, doc, attributes),
-            price=user_star_gift.gift.stars,
-            convert_price=user_star_gift.gift.convert_stars,
-            available_amount=getattr(user_star_gift.gift, "availability_remains", None),
-            total_amount=getattr(user_star_gift.gift, "availability_total", None),
-            date=utils.timestamp_to_datetime(user_star_gift.date),
-            is_limited=getattr(user_star_gift.gift, "limited", None),
-            is_name_hidden=getattr(user_star_gift, "name_hidden", None),
-            is_saved=not user_star_gift.unsaved if getattr(user_star_gift, "unsaved", None) else None,
-            from_user=types.User._parse(client, users.get(user_star_gift.from_id)) if getattr(user_star_gift, "from_id", None) else None,
-            message_id=getattr(user_star_gift, "msg_id", None),
-            caption=caption,
-            caption_entities=caption_entities,
-            client=client
-        )
+        gift = await StarGift._parse(client, user_star_gift.gift)
+        gift.date = utils.timestamp_to_datetime(user_star_gift.date)
+        gift.is_name_hidden = user_star_gift.name_hidden
+        gift.is_saved = not user_star_gift.unsaved
+        gift.from_user = types.User._parse(client, users.get(utils.get_raw_peer_id(user_star_gift.from_id)))
+        gift.message_id = user_star_gift.msg_id
+        gift.caption = caption
+        gift.caption_entities = caption_entities
+        return gift
 
     @staticmethod
     async def _parse_action(

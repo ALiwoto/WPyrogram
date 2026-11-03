@@ -78,7 +78,7 @@ class SendStarGift:
         text, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
         invoice = raw.types.InputInvoiceStarGift(
-            user_id=peer,
+            peer=peer,
             gift_id=star_gift_id,
             hide_name=hide_my_name,
             message=raw.types.TextWithEntities(text=text, entities=entities or []) if text else None

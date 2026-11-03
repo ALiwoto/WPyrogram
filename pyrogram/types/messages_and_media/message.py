@@ -502,6 +502,7 @@ class Message(Object, Update):
         has_protected_content: bool = None,
         has_media_spoiler: bool = None,
         text: Str = None,
+        rich_message: "types.RichMessage" = None,
         quote_text: Str = None,
         entities: List["types.MessageEntity"] = None,
         caption_entities: List["types.MessageEntity"] = None,
@@ -626,6 +627,7 @@ class Message(Object, Update):
         self.has_protected_content = has_protected_content
         self.has_media_spoiler = has_media_spoiler
         self.text = text
+        self.rich_message = rich_message
         self.quote_text = quote_text
         self.entities = entities
         self.caption_entities = caption_entities
@@ -1217,6 +1219,7 @@ class Message(Object, Update):
                 id=message.id,
                 message_thread_id=message_thread_id,
                 effect_id=getattr(message, "effect", None),
+                rich_message=types.RichMessage._parse(message.rich_message, users) if message.rich_message else None,
                 date=utils.timestamp_to_datetime(message.date),
                 chat=types.Chat._parse(client, message, users, chats, is_chat=True),
                 from_user=from_user,
@@ -1447,7 +1450,7 @@ class Message(Object, Update):
 
     async def reply_text(
         self,
-        text: str,
+        text: str = "",
         quote: bool = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
@@ -1463,7 +1466,8 @@ class Message(Object, Update):
         protect_content: bool = None,
         business_connection_id: str = None,
         allow_paid_broadcast: bool = None,
-        reply_markup=None
+        reply_markup=None,
+        rich_message: "types.InputRichMessage" = None,
     ) -> "Message":
         """Bound method *reply_text* of :obj:`~pyrogram.types.Message`.
 
@@ -1567,6 +1571,7 @@ class Message(Object, Update):
         return await self._client.send_message(
             chat_id=self.chat.id,
             text=text,
+            rich_message=rich_message,
             parse_mode=parse_mode,
             entities=entities,
             disable_web_page_preview=disable_web_page_preview,
@@ -1585,6 +1590,10 @@ class Message(Object, Update):
         )
 
     reply = reply_text
+
+    async def reply_rich_message(self, rich_message: "types.InputRichMessage", **kwargs) -> "Message":
+        """Reply with rich content. Accepts the same options as reply_text."""
+        return await self.reply_text(rich_message=rich_message, **kwargs)
 
     async def reply_animation(
         self,
@@ -4241,12 +4250,13 @@ class Message(Object, Update):
 
     async def edit_text(
         self,
-        text: str,
+        text: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
         show_caption_above_media: bool = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: "types.InlineKeyboardMarkup" = None,
+        rich_message: "types.InputRichMessage" = None,
     ) -> "Message":
         """Bound method *edit_text* of :obj:`~pyrogram.types.Message`.
 
@@ -4297,6 +4307,7 @@ class Message(Object, Update):
             chat_id=self.chat.id,
             message_id=self.id,
             text=text,
+            rich_message=rich_message,
             parse_mode=parse_mode,
             entities=entities,
             disable_web_page_preview=disable_web_page_preview,
@@ -4305,6 +4316,10 @@ class Message(Object, Update):
         )
 
     edit = edit_text
+
+    async def edit_rich_message(self, rich_message: "types.InputRichMessage", **kwargs) -> "Message":
+        """Replace rich content. Accepts the same options as edit_text."""
+        return await self.edit_text(rich_message=rich_message, **kwargs)
 
     async def edit_caption(
         self,
@@ -4624,11 +4639,12 @@ class Message(Object, Update):
                         self.chat.id, self.id)
         elif self.empty:
             log.warning("Empty messages cannot be copied.")
-        elif self.text:
+        elif self.text or self.rich_message:
             return await self._client.send_message(
                 chat_id,
-                text=self.text,
-                entities=self.entities,
+                text="" if self.rich_message else self.text,
+                entities=None if self.rich_message else self.entities,
+                rich_message=self.rich_message.to_input() if self.rich_message else None,
                 parse_mode=enums.ParseMode.DISABLED,
                 disable_web_page_preview=not self.web_page,
                 disable_notification=disable_notification,

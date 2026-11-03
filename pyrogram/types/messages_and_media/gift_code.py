@@ -31,7 +31,10 @@ class GiftCode(Object):
             You can combine it with `t.me/giftcode/{id}` to get link for this gift.
 
         premium_subscription_month_count (``int``):
-            Number of months of subscription.
+            Legacy constructor field. Received gifts use premium_subscription_day_count.
+
+        premium_subscription_day_count (``int``):
+            Subscription duration in days.
 
         caption (``str``, *optional*):
             Text message.
@@ -68,7 +71,8 @@ class GiftCode(Object):
         self,
         *,
         id: str,
-        premium_subscription_month_count: int,
+        premium_subscription_month_count: Optional[int] = None,
+        premium_subscription_day_count: Optional[int] = None,
         caption: Optional[str] = None,
         caption_entities: List["types.MessageEntity"] = None,
         via_giveaway: Optional[bool] = None,
@@ -83,6 +87,7 @@ class GiftCode(Object):
 
         self.id = id
         self.premium_subscription_month_count = premium_subscription_month_count
+        self.premium_subscription_day_count = premium_subscription_day_count
         self.caption = caption
         self.caption_entities = caption_entities
         self.via_giveaway = via_giveaway
@@ -101,7 +106,7 @@ class GiftCode(Object):
 
         return GiftCode(
             id=giftcode.slug,
-            premium_subscription_month_count=giftcode.months,
+            premium_subscription_day_count=giftcode.days,
             caption=message or None,
             caption_entities=entities or None,
             via_giveaway=getattr(giftcode, "via_giveaway"),

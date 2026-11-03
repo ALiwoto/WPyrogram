@@ -228,6 +228,17 @@ text = create(text_filter)
 
 # endregion
 
+# region rich_message_filter
+async def rich_message_filter(_, __, m: Message):
+    return m.rich_message is not None
+
+
+rich_message = create(rich_message_filter)
+"""Filter messages containing rich content."""
+
+
+# endregion
+
 # region reply_filter
 async def reply_filter(_, __, m: Message):
     return bool(m.reply_to_message_id or m.reply_to_story_id)

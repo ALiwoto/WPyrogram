@@ -42,7 +42,14 @@ class InputReplyToStory(Object):
         self.story_id = story_id
 
     def write(self):
+        if isinstance(self.user_id, raw.types.InputUserSelf):
+            peer = raw.types.InputPeerSelf()
+        else:
+            peer = raw.types.InputPeerUser(
+                user_id=self.user_id.user_id,
+                access_hash=self.user_id.access_hash,
+            )
         return raw.types.InputReplyToStory(
-            user_id=self.user_id,
+            peer=peer,
             story_id=self.story_id
         ).write()

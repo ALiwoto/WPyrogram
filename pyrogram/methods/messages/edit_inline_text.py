@@ -30,11 +30,12 @@ class EditInlineText:
     async def edit_inline_text(
         self: "pyrogram.Client",
         inline_message_id: str,
-        text: str,
+        text: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
-        reply_markup: "Optional[ReplyMarkup]" = None
+        reply_markup: "Optional[ReplyMarkup]" = None,
+        rich_message: "types.InputRichMessage" = None,
     ) -> bool:
         """Edit the text of inline messages.
 
@@ -77,6 +78,13 @@ class EditInlineText:
                     disable_web_page_preview=True)
         """
 
+        if rich_message is not None:
+            if text or entities:
+                raise ValueError("rich_message cannot be combined with text or entities")
+            content = {"rich_message": rich_message.write()}
+        else:
+            content = await utils.parse_text_entities(self, text, parse_mode, entities)
+
         unpacked = utils.unpack_inline_message_id(inline_message_id)
         dc_id = unpacked.dc_id
 
@@ -87,7 +95,7 @@ class EditInlineText:
                 id=unpacked,
                 no_webpage=disable_web_page_preview or None,
                 reply_markup=await utils.write_reply_markup(self, reply_markup),
-                **await utils.parse_text_entities(self, text, parse_mode, entities)
+                **content
             ),
             sleep_threshold=self.sleep_threshold
         )

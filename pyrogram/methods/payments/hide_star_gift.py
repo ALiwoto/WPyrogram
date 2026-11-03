@@ -58,8 +58,7 @@ class HideStarGift:
 
         r = await self.invoke(
             raw.functions.payments.SaveStarGift(
-                user_id=peer,
-                msg_id=message_id,
+                stargift=raw.types.InputSavedStarGiftUser(msg_id=message_id),
                 unsave=True
             )
         )

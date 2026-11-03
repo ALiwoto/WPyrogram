@@ -65,8 +65,8 @@ class GetUserStarGifts:
 
         while True:
             r = await self.invoke(
-                raw.functions.payments.GetUserStarGifts(
-                    user_id=peer,
+                raw.functions.payments.GetSavedStarGifts(
+                    peer=peer,
                     offset=offset,
                     limit=limit
                 ),

@@ -59,8 +59,10 @@ class UpdateColor:
             r = await self.invoke(
                 raw.functions.account.UpdateColor(
                     for_profile=isinstance(color, enums.ProfileColor),
-                    color=color.value,
-                    background_emoji_id=background_emoji_id
+                    color=raw.types.PeerColor(
+                        color=color.value,
+                        background_emoji_id=background_emoji_id,
+                    )
                 )
             )
         else:

@@ -27,19 +27,30 @@ from pyrogram import utils
 
 
 class EditMessageText:
+    async def edit_rich_message(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_id: int,
+        rich_message: "types.InputRichMessage",
+        **kwargs,
+    ) -> "types.Message":
+        """Edit rich content with the same options as edit_message_text."""
+        return await self.edit_message_text(chat_id, message_id, rich_message=rich_message, **kwargs)
+
     async def edit_message_text(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         message_id: int,
-        text: str,
+        text: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
         show_caption_above_media: bool = None,
         schedule_date: datetime = None,
-        reply_markup: "Optional[ReplyMarkup]" = None
+        reply_markup: "Optional[ReplyMarkup]" = None,
+        rich_message: "types.InputRichMessage" = None,
     ) -> "types.Message":
-        """Edit the text of messages.
+        """Edit text or supply rich_message to replace the rich content.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -89,6 +100,13 @@ class EditMessageText:
                     disable_web_page_preview=True)
         """
 
+        if rich_message is not None:
+            if text or entities:
+                raise ValueError("rich_message cannot be combined with text or entities")
+            content = {"rich_message": rich_message.write()}
+        else:
+            content = await utils.parse_text_entities(self, text, parse_mode, entities)
+
         r = await self.invoke(
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
@@ -97,7 +115,7 @@ class EditMessageText:
                 invert_media=show_caption_above_media or None,
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 reply_markup=await utils.write_reply_markup(self, reply_markup),
-                **await utils.parse_text_entities(self, text, parse_mode, entities)
+                **content
             )
         )
 

@@ -26,10 +26,19 @@ from pyrogram import types
 
 
 class SendMessage:
+    async def send_rich_message(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        rich_message: "types.InputRichMessage",
+        **kwargs,
+    ) -> Optional["types.Message"]:
+        """Send rich content with the same delivery options as send_message."""
+        return await self.send_message(chat_id, rich_message=rich_message, **kwargs)
+
     async def send_message(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        text: str,
+        text: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         disable_web_page_preview: bool = None,
@@ -47,9 +56,13 @@ class SendMessage:
         protect_content: bool = None,
         business_connection_id: str = None,
         allow_paid_broadcast: bool = None,
-        reply_markup: "Optional[ReplyMarkup]" = None
+        reply_markup: "Optional[ReplyMarkup]" = None,
+        rich_message: "types.InputRichMessage" = None,
     ) -> Optional["types.Message"]:
-        """Send text messages.
+        """Send text or rich messages.
+
+        Pass rich_message instead of text for structured content. Its HTML or
+        Markdown is parsed by Telegram, independently of parse_mode.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -165,7 +178,12 @@ class SendMessage:
         if isinstance(reply_markup, (dict, list)):
             reply_markup = types.InlineKeyboardMarkup.from_buttons(reply_markup)
 
-        message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
+        if rich_message is not None:
+            if text or entities:
+                raise ValueError("rich_message cannot be combined with text or entities")
+            message = ""
+        else:
+            message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
         quote_text, quote_entities = (await utils.parse_text_entities(self, quote_text, parse_mode, quote_entities)).values()
 
@@ -190,6 +208,7 @@ class SendMessage:
                 allow_paid_floodskip=allow_paid_broadcast,
                 reply_markup=await utils.write_reply_markup(self, reply_markup, for_send=True),
                 message=message,
+                rich_message=rich_message.write() if rich_message is not None else None,
                 entities=entities,
                 noforwards=protect_content,
                 effect=effect_id
@@ -198,6 +217,9 @@ class SendMessage:
         )
 
         if isinstance(r, raw.types.UpdateShortSentMessage):
+            if rich_message is not None:
+                return await self.get_messages(chat_id, r.id)
+
             peer = await self.resolve_peer(chat_id)
 
             peer_id = (

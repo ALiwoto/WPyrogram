@@ -30,7 +30,10 @@ class CheckedGiftCode(Object):
             Date when the giveaway was launched.
 
         months (``int``):
-            Number of months of subscription.
+            Legacy constructor field. Received gifts use days.
+
+        days (``int``):
+            Subscription duration in days.
 
         via_giveaway (``bool``, *optional*):
             True if the gift code is received via giveaway.
@@ -52,7 +55,8 @@ class CheckedGiftCode(Object):
         self,
         *,
         date: datetime,
-        months: int,
+        months: int = None,
+        days: int = None,
         via_giveaway: bool = None,
         from_chat: "types.Chat" = None,
         winner: "types.User" = None,
@@ -63,6 +67,7 @@ class CheckedGiftCode(Object):
 
         self.date = date
         self.months = months
+        self.days = days
         self.via_giveaway = via_giveaway
         self.from_chat = from_chat
         self.winner = winner
@@ -83,7 +88,7 @@ class CheckedGiftCode(Object):
 
         return CheckedGiftCode(
             date=utils.timestamp_to_datetime(checked_gift_code.date),
-            months=checked_gift_code.months,
+            days=checked_gift_code.days,
             via_giveaway=getattr(checked_gift_code, "via_giveaway", None),
             from_chat=from_chat,
             winner=winner,

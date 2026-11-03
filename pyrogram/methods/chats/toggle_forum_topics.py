@@ -56,7 +56,8 @@ class ToggleForumTopics:
             r = await self.invoke(
                 raw.functions.channels.ToggleForum(
                     channel=await self.resolve_peer(chat_id),
-                    enabled=enabled
+                    enabled=enabled,
+                    tabs=False,
                 )
             )
 

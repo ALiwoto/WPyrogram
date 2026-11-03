@@ -46,6 +46,9 @@ class Object:
 
     @staticmethod
     def default(obj: "Object"):
+        if isinstance(obj, pyrogram.raw.core.TLObject):
+            return pyrogram.raw.core.TLObject.default(obj)
+
         if isinstance(obj, bytes):
             return repr(obj)
 

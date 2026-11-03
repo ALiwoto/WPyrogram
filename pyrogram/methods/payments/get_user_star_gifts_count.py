@@ -54,8 +54,8 @@ class GetUserStarGiftsCount:
             raise ValueError("chat_id must belong to a user.")
 
         r = await self.invoke(
-            raw.functions.payments.GetUserStarGifts(
-                user_id=peer,
+            raw.functions.payments.GetSavedStarGifts(
+                peer=peer,
                 offset="",
                 limit=1
             )

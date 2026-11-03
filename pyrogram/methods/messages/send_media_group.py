@@ -493,6 +493,7 @@ class SendMediaGroup:
         return await utils.parse_messages(
             self,
             raw.types.messages.Messages(
+                topics=[],
                 messages=[m.message for m in filter(
                     lambda u: isinstance(u, (raw.types.UpdateNewMessage,
                                              raw.types.UpdateNewChannelMessage,

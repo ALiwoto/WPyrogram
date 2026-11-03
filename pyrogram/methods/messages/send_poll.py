@@ -218,6 +218,7 @@ class SendPoll:
                 media=raw.types.InputMediaPoll(
                     poll=raw.types.Poll(
                         id=self.rnd_id(),
+                        hash=0,
                         question=raw.types.TextWithEntities(
                             text=question,
                             entities=question_entities or []
@@ -230,7 +231,7 @@ class SendPoll:
                         close_period=open_period,
                         close_date=utils.datetime_to_timestamp(close_date)
                     ),
-                    correct_answers=[bytes([correct_option_id])] if correct_option_id is not None else None,
+                    correct_answers=[correct_option_id] if correct_option_id is not None else None,
                     solution=solution,
                     solution_entities=solution_entities or []
                 ),

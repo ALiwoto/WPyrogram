@@ -18,7 +18,9 @@
 
 from .input_message_content import InputMessageContent
 from .input_text_message_content import InputTextMessageContent
+from .input_rich_message import InputRichMessage
+from .input_rich_message_content import InputRichMessageContent
 
 __all__ = [
-    "InputMessageContent", "InputTextMessageContent"
+    "InputMessageContent", "InputTextMessageContent", "InputRichMessage", "InputRichMessageContent"
 ]
