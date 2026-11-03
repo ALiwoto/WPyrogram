@@ -25,18 +25,25 @@ try {
         throw 'Commit or stash pending changes before releasing.'
     }
 
-    Invoke-Git checkout woto-version
-
-    $versionPath = Join-Path $PSScriptRoot 'pyrogram/__init__.py'
-    $source = Get-Content -LiteralPath $versionPath -Raw
-    $versionPattern = '(?m)^__version__ = "(\d+)\.(\d+)\.(\d+)"'
-    if ($source -notmatch $versionPattern) {
-        throw 'Expected __version__ in pyrogram/__init__.py to use major.minor.patch.'
+    if ((Invoke-Git branch --show-current) -ne 'master') {
+        throw 'Run releases from the master branch.'
     }
 
-    $majorVersion = [int]$Matches[1]
-    $minorVersion = [int]$Matches[2]
-    $patchVersion = [int]$Matches[3]
+    Invoke-Git fetch origin --tags
+    if ((Invoke-Git rev-parse HEAD) -ne (Invoke-Git rev-parse origin/master)) {
+        throw 'Push master and bring it up to date with origin/master before releasing.'
+    }
+
+    $versionPattern = '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+    $lastTag = Invoke-Git tag --list 'v*' --sort=-version:refname |
+        Where-Object { $_ -match $versionPattern } |
+        Select-Object -First 1
+    if (!$lastTag) {
+        throw 'No vMAJOR.MINOR.PATCH release tag found.'
+    }
+
+    $majorVersion, $minorVersion, $patchVersion = ($lastTag -replace '^v') -split '\.' |
+        ForEach-Object { [int]$_ }
 
     if ($Major) {
         $majorVersion++
@@ -50,14 +57,9 @@ try {
     }
 
     $newVersion = "$majorVersion.$minorVersion.$patchVersion"
-    $source = $source -replace $versionPattern, "__version__ = `"$newVersion`""
-    Set-Content -LiteralPath $versionPath -Value $source -Encoding utf8 -NoNewline
-
-    Invoke-Git commit --only -m "Bump version to $newVersion" -- pyrogram/__init__.py
-    Invoke-Git checkout Production
-    Invoke-Git merge woto-version
-    Invoke-Git push origin Production
-    Invoke-Git checkout woto-version
+    $newTag = "v$newVersion"
+    Invoke-Git tag -a $newTag -m "WPyrogram $newVersion" HEAD
+    Invoke-Git push origin "refs/tags/$newTag"
 } finally {
     Pop-Location
 }

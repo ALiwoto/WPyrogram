@@ -2,8 +2,7 @@ name: PyPI package release
 
 on:
   push:
-    branches: [Production]
-  workflow_dispatch:
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -41,11 +40,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          archive=(dist/wpyrogram-*.tar.gz)
-          version=${archive[0]#dist/wpyrogram-}
-          version=${version%.tar.gz}
-          gh release create "v${version}" dist/* \
+          gh release create "$GITHUB_REF_NAME" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "WPyrogram ${version}" \
+            --verify-tag \
+            --title "WPyrogram ${GITHUB_REF_NAME#v}" \
             --notes ""
