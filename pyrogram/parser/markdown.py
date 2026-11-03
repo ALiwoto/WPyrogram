@@ -19,6 +19,7 @@
 import html
 import re
 from typing import Optional
+from urllib.parse import parse_qs
 
 import pyrogram
 from pyrogram.enums import MessageEntityType
@@ -109,6 +110,17 @@ class Markdown:
                 continue
 
             if is_emoji:
+                if url.startswith("tg://time?"):
+                    params = parse_qs(url[len("tg://time?"):], keep_blank_values=True)
+                    unix_time = int(params["unix"][0])
+                    date_time_format = params.get("format", [""])[0]
+                    utils.parse_date_time_format(date_time_format)
+                    markup = (
+                        f'<tg-time unix="{unix_time}" format="{date_time_format}">'
+                        f'{text_url}</tg-time>'
+                    )
+                    text = utils.replace_once(text, full, markup, start)
+                    continue
                 emoji = text_url
                 emoji_id = url.lstrip("tg://emoji?id=")
                 text = utils.replace_once(text, full, EMOJI_MARKUP.format(emoji_id, emoji), start)
@@ -203,6 +215,12 @@ class Markdown:
                 emoji_id = entity.custom_emoji_id
                 start_tag = "!["
                 end_tag = f"](tg://emoji?id={emoji_id})"
+            elif entity_type == MessageEntityType.DATE_TIME:
+                start_tag = "!["
+                end_tag = (
+                    f"](tg://time?unix={entity.unix_time}"
+                    f"&format={entity.date_time_format or ''})"
+                )
             else:
                 continue
 

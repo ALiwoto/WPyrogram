@@ -80,6 +80,10 @@ class Parser(HTMLParser):
             entity = raw.types.MessageEntityCustomEmoji
             custom_emoji_id = int(attrs.get("id"))
             extra["document_id"] = custom_emoji_id
+        elif tag == "tg-time":
+            entity = raw.types.MessageEntityFormattedDate
+            extra["date"] = int(attrs["unix"])
+            extra.update(utils.parse_date_time_format(attrs.get("format", "")))
         else:
             return
 
@@ -202,6 +206,10 @@ class HTML:
                 custom_emoji_id = entity.custom_emoji_id
                 start_tag = f'<emoji id="{custom_emoji_id}">'
                 end_tag = "</emoji>"
+            elif entity_type == MessageEntityType.DATE_TIME:
+                format = entity.date_time_format or ""
+                start_tag = f'<tg-time unix="{entity.unix_time}" format="{format}">'
+                end_tag = "</tg-time>"
             else:
                 return
 

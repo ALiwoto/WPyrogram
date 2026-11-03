@@ -21,6 +21,7 @@ from typing import Optional
 import pyrogram
 from pyrogram import raw, enums
 from pyrogram import types
+from pyrogram.parser.utils import DATE_TIME_FORMAT_FLAGS, parse_date_time_format
 from ..object import Object
 
 
@@ -54,6 +55,13 @@ class MessageEntity(Object):
 
         expandable (``bool``, *optional*):
             For :obj:`~pyrogram.enums.MessageEntityType.BLOCKQUOTE` only, whether the blockquote is expandable or not.
+
+        unix_time (``int``, *optional*):
+            Unix timestamp for DATE_TIME entities.
+
+        date_time_format (``str``, *optional*):
+            DATE_TIME format: "r" for relative time, or w?[dD]?[tT]?.
+            An empty format keeps the supplied text while making the date accessible.
     """
 
     def __init__(
@@ -67,7 +75,9 @@ class MessageEntity(Object):
         user: "types.User" = None,
         language: str = None,
         custom_emoji_id: int = None,
-        expandable: bool = None
+        expandable: bool = None,
+        unix_time: int = None,
+        date_time_format: str = None,
     ):
         super().__init__(client)
 
@@ -79,6 +89,8 @@ class MessageEntity(Object):
         self.language = language
         self.custom_emoji_id = custom_emoji_id
         self.expandable = expandable
+        self.unix_time = unix_time
+        self.date_time_format = date_time_format
 
     @staticmethod
     def _parse(client, entity: "raw.base.MessageEntity", users: dict) -> Optional["MessageEntity"]:
@@ -100,6 +112,14 @@ class MessageEntity(Object):
             language=getattr(entity, "language", None),
             custom_emoji_id=getattr(entity, "document_id", None),
             expandable=getattr(entity, "collapsed", None),
+            unix_time=getattr(entity, "date", None),
+            date_time_format=(
+                "".join(
+                    char for char, flag in DATE_TIME_FORMAT_FLAGS.items()
+                    if getattr(entity, flag, False)
+                )
+                if entity_type == enums.MessageEntityType.DATE_TIME else None
+            ),
             client=client
         )
 
@@ -125,6 +145,14 @@ class MessageEntity(Object):
         args.pop("expandable")
         if self.expandable is not None:
             args["collapsed"] = self.expandable
+
+        args.pop("unix_time")
+        args.pop("date_time_format")
+        if self.type == enums.MessageEntityType.DATE_TIME:
+            if self.unix_time is None:
+                raise ValueError("DATE_TIME entities require unix_time")
+            args["date"] = self.unix_time
+            args.update(parse_date_time_format(self.date_time_format or ""))
 
         entity = self.type.value
 

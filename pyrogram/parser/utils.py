@@ -22,6 +22,21 @@ from struct import unpack
 # SMP = Supplementary Multilingual Plane: https://en.wikipedia.org/wiki/Plane_(Unicode)#Overview
 SMP_RE = re.compile(r"[\U00010000-\U0010FFFF]")
 
+DATE_TIME_FORMAT_FLAGS = {
+    "r": "relative",
+    "w": "day_of_week",
+    "d": "short_date",
+    "D": "long_date",
+    "t": "short_time",
+    "T": "long_time",
+}
+
+
+def parse_date_time_format(format: str) -> dict:
+    if re.fullmatch(r"r|w?[dD]?[tT]?", format) is None:
+        raise ValueError(f"Invalid date-time format: {format!r}")
+    return {DATE_TIME_FORMAT_FLAGS[char]: True for char in format}
+
 
 def add_surrogates(text: str) -> str:
     # Replace each SMP code point with a surrogate pair
