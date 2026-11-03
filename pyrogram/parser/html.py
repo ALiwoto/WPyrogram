@@ -93,7 +93,8 @@ class Parser(HTMLParser):
         self.tag_entities[tag].append(entity(offset=len(self.text), length=0, **extra))
 
     def handle_data(self, data):
-        data = html.unescape(data)
+        # HTMLParser already decoded character references; keep Telegram's UTF-16 offsets.
+        data = utils.add_surrogates(data)
 
         for entities in self.tag_entities.values():
             for entity in entities:

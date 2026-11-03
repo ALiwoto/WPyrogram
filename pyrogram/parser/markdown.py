@@ -62,17 +62,17 @@ class Markdown:
     def __init__(self, client: Optional["pyrogram.Client"]):
         self.html = HTML(client)
 
-    def _parse_blockquotes(self, text: str):
-        text = html.unescape(text)
+    def _parse_blockquotes(self, text: str, strict: bool = False):
+        quote_prefix = html.escape(BLOCKQUOTE_DELIM) if strict else BLOCKQUOTE_DELIM
         lines = text.split('\n')
         result = []
         in_blockquote = False
         current_blockquote = []
 
         for line in lines:
-            if line.startswith(BLOCKQUOTE_DELIM):
+            if line.startswith(quote_prefix):
                 in_blockquote = True
-                current_blockquote.append(line[1:].strip())
+                current_blockquote.append(line[len(quote_prefix):].strip())
             else:
                 if in_blockquote:
                     in_blockquote = False
@@ -89,7 +89,7 @@ class Markdown:
         if strict:
             text = html.escape(text)
 
-        text = self._parse_blockquotes(text)
+        text = self._parse_blockquotes(text, strict)
 
         delims = set()
         is_fixed_width = False
@@ -111,7 +111,7 @@ class Markdown:
 
             if is_emoji:
                 if url.startswith("tg://time?"):
-                    params = parse_qs(url[len("tg://time?"):], keep_blank_values=True)
+                    params = parse_qs(html.unescape(url[len("tg://time?"):]), keep_blank_values=True)
                     unix_time = int(params["unix"][0])
                     date_time_format = params.get("format", [""])[0]
                     utils.parse_date_time_format(date_time_format)
