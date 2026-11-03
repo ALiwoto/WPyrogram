@@ -59,9 +59,6 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: 3.14",
         "Programming Language :: Python :: 3.15",
         "Programming Language :: Python :: Implementation",
@@ -80,7 +77,7 @@ setup(
         "Source": "https://github.com/ALiwoto/WPyrogram",
         "Documentation": "https://docs.pyrogram.org",
     },
-    python_requires=">=3.11",
+    python_requires=">=3.14",
     package_data={
         "pyrogram": ["py.typed"],
     },
@@ -98,9 +95,9 @@ setup(
                 "pyrogram/crypto/tgcrypto/ctr256.c",
                 "pyrogram/crypto/tgcrypto/cbc256.c",
             ],
-            define_macros=[("Py_LIMITED_API", "0x030B0000")],
+            define_macros=[("Py_LIMITED_API", "0x030E0000")],
             py_limited_api=True,
         )
     ],
-    options={"bdist_wheel": {"py_limited_api": "cp311"}},
+    options={"bdist_wheel": {"py_limited_api": "cp314"}},
 )
