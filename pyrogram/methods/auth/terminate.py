@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import logging
 
 import pyrogram
@@ -27,11 +28,18 @@ log = logging.getLogger(__name__)
 class Terminate:
     async def terminate(
         self: "pyrogram.Client",
+        *,
+        cancel_pending: bool = False
     ):
         """Terminate the client by shutting down workers.
 
         This method does the opposite of :meth:`~pyrogram.Client.initialize`.
         It will stop the dispatcher and shut down updates and download workers.
+
+        Parameters:
+            cancel_pending (``bool``, *optional*):
+                Cancel running update workers and discard queued updates instead of waiting for them to finish.
+                Defaults to False.
 
         Raises:
             ConnectionError: In case you try to terminate a client that is already terminated.
@@ -44,7 +52,7 @@ class Terminate:
             log.info("Takeout session %s finished", self.takeout_id)
 
         await self.storage.save()
-        await self.dispatcher.stop()
+        await self.dispatcher.stop(cancel_pending=cancel_pending)
 
         for media_session in self.media_sessions.values():
             await media_session.stop()
@@ -54,7 +62,11 @@ class Terminate:
         self.updates_watchdog_event.set()
 
         if self.updates_watchdog_task is not None:
-            await self.updates_watchdog_task
+            if cancel_pending:
+                self.updates_watchdog_task.cancel()
+                await asyncio.gather(self.updates_watchdog_task, return_exceptions=True)
+            else:
+                await self.updates_watchdog_task
 
         self.updates_watchdog_event.clear()
 

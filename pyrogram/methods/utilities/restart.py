@@ -22,7 +22,9 @@ import pyrogram
 class Restart:
     async def restart(
         self: "pyrogram.Client",
-        block: bool = True
+        block: bool = True,
+        *,
+        cancel_pending: bool = False
     ):
         """Restart the Client.
 
@@ -34,6 +36,10 @@ class Restart:
                 Blocks the code execution until the client has been restarted. It is useful with ``block=False`` in case
                 you want to restart the own client within an handler in order not to cause a deadlock.
                 Defaults to True.
+
+            cancel_pending (``bool``, *optional*):
+                Cancel running update workers and discard queued updates before restarting.
+                Defaults to False. Use ``block=False`` when calling from a handler.
 
         Returns:
             :obj:`~pyrogram.Client`: The restarted client itself.
@@ -61,7 +67,7 @@ class Restart:
         """
 
         async def do_it():
-            await self.stop()
+            await self.stop(cancel_pending=cancel_pending)
             await self.start()
 
         if block:

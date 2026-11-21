@@ -226,13 +226,23 @@ class Dispatcher:
             if not self.client.skip_updates:
                 await self.client.recover_gaps()
 
-    async def stop(self):
+    async def stop(self, cancel_pending: bool = False):
         if not self.client.no_updates:
-            for i in range(self.client.workers):
-                self.updates_queue.put_nowait(None)
+            if cancel_pending:
+                for task in self.handler_worker_tasks:
+                    task.cancel()
 
-            for i in self.handler_worker_tasks:
-                await i
+                await asyncio.gather(*self.handler_worker_tasks, return_exceptions=True)
+
+                # Discard queued updates instead of processing them during shutdown.
+                while not self.updates_queue.empty():
+                    self.updates_queue.get_nowait()
+            else:
+                for i in range(self.client.workers):
+                    self.updates_queue.put_nowait(None)
+
+                for i in self.handler_worker_tasks:
+                    await i
 
             self.handler_worker_tasks.clear()
             self.groups.clear()

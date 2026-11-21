@@ -23,6 +23,7 @@ from urllib.parse import parse_qs
 
 import pyrogram
 from pyrogram.enums import MessageEntityType
+
 from . import utils
 from .html import HTML
 
@@ -122,7 +123,7 @@ class Markdown:
                     text = utils.replace_once(text, full, markup, start)
                     continue
                 emoji = text_url
-                emoji_id = url.lstrip("tg://emoji?id=")
+                emoji_id = url.removeprefix("tg://emoji?id=")
                 text = utils.replace_once(text, full, EMOJI_MARKUP.format(emoji_id, emoji), start)
                 continue
 
@@ -227,9 +228,9 @@ class Markdown:
             entities_offsets.append((start_tag, start,))
             entities_offsets.append((end_tag, end,))
 
-        entities_offsets = map(
-            lambda x: x[1],
-            sorted(
+        entities_offsets = (
+            entity_offset
+            for _, entity_offset in sorted(
                 enumerate(entities_offsets),
                 key=lambda x: (x[1][1], x[0]),
                 reverse=True
